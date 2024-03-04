@@ -32,6 +32,8 @@ public class InputReader {
             String line = scanner.nextLine().split("\\[")[1].split("]")[0];
             opponents[i] = Arrays.stream(line.trim().split("\\s+" )).mapToInt(Integer::parseInt).toArray();
         }
+
+        scanner.close();
         return new Problem(nTeams, dist, opponents, q1, q2);
     }
 }
