@@ -37,14 +37,14 @@ public class Problem {
         public List<Integer> getFeasibleAllocations(int umpire, int round) {
             List<Integer> feasibleAllocations = new ArrayList<>();
             for (int i = 0; i < nTeams; i++) {
-                if (isValidAllocation(umpire, round, i)) {
+                if (isValidAllocation(umpire-1, round, i)) {
                     feasibleAllocations.add(i);
                 }
             }
             return feasibleAllocations;
         }
 
-        private boolean isValidAllocation(int umpire, int round, int game) {
+        private boolean isValidAllocation(int umpire, int round, int game) {//crasht bij laatste umpire
             // Controleer Q1-constraint
             for (int i = 1; i < q1 && round - i >= 0; i++) {
                 if (dist[umpire][game] == dist[umpire][round - i]) {
@@ -76,7 +76,8 @@ public class Problem {
         return sb.toString();
     }
 
-    public boolean canBePruned(int iets) {//Deze begrijp ik nog niet helemaal
+    public boolean canBePruned(int iets) {
+
         return false;
     }
 }
