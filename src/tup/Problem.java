@@ -1,6 +1,8 @@
 package tup;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Problem {
     final int q1;
@@ -28,5 +30,37 @@ public class Problem {
         sb.append(",\n opponents=").append(Arrays.deepToString(opponents));
         sb.append('}');
         return sb.toString();
+    }
+
+
+    public List<Integer> getFeasibleAllocations(int umpire, int round) {
+        List<Integer> feasibleAllocations = new ArrayList<>();
+        for (int i = 0; i < nTeams; i++) {
+                if (isValidAllocation(umpire, round, i)) {
+                    feasibleAllocations.add(i);
+                }
+            }
+            return feasibleAllocations;
+        }
+        private boolean isValidAllocation(int umpire, int round, int game) {
+            // Controleer of de scheidsrechter niet dezelfde locatie heeft bezocht in de vorige q1 - 1 rondes
+            for (int i = 1; i < q1 && round - i >= 0; i++) {
+                if (dist[umpire][game] == dist[umpire][round - i]) {
+                    return false;
+                }
+            }
+
+            // Controleer of de scheidsrechter geen van de teams heeft gefloten tijdens de vorige q2 - 1 rondes
+            for (int i = 1; i < q2 && round - i >= 0; i++) {
+                if (opponents[umpire][game] == opponents[umpire][round - i]) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+    public boolean canBePruned(Integer a) {//deze snap ik nog niet helemaal
+        return false;
     }
 }
