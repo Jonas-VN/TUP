@@ -31,36 +31,63 @@ public class Problem {
         sb.append('}');
         return sb.toString();
     }
+    public void assignUmpires() {
+        int[][] assignments = new int[nTeams][2*nTeams - 2];
 
-
-    public List<Integer> getFeasibleAllocations(int umpire, int round) {
-        List<Integer> feasibleAllocations = new ArrayList<>();
+        // Wijs in de eerste ronde elke scheidsrechter toe aan een thuisveld
         for (int i = 0; i < nTeams; i++) {
-                if (isValidAllocation(umpire, round, i)) {
-                    feasibleAllocations.add(i);
-                }
-            }
-            return feasibleAllocations;
+            assignments[i][0] = Math.abs(opponents[0][i]);
         }
-        private boolean isValidAllocation(int umpire, int round, int game) {
-            // Controleer of de scheidsrechter niet dezelfde locatie heeft bezocht in de vorige q1 - 1 rondes
-            for (int i = 1; i < q1 && round - i >= 0; i++) {
-                if (dist[umpire][game] == dist[umpire][round - i]) {
-                    return false;
-                }
-            }
 
-            // Controleer of de scheidsrechter geen van de teams heeft gefloten tijdens de vorige q2 - 1 rondes
-            for (int i = 1; i < q2 && round - i >= 0; i++) {
-                if (opponents[umpire][game] == opponents[umpire][round - i]) {
-                    return false;
+        // Wijs scheidsrechters toe voor de resterende rondes
+        for (int round = 1; round < 2*nTeams - 2; round++) {
+            for (int umpire = 0; umpire < nTeams; umpire++) {
+                List<Integer> feasibleAllocations = getFeasibleAllocations(umpire, round, assignments);
+                if (!feasibleAllocations.isEmpty()){
+                    for (Integer allocation : feasibleAllocations) {
+                        assignments[umpire][round] = Math.abs(opponents[umpire][allocation]);
+                        break;
+                    }
                 }
-            }
+                else assignments[umpire][round] = 99;//hier moet je dan eigenlijk backtracken denk ik
 
-            return true;
+            }
         }
+    }
+
 
     public boolean canBePruned(Integer a) {//deze snap ik nog niet helemaal
         return false;
     }
+
+
+    public List<Integer> getFeasibleAllocations(int umpire, int round, int[] [] assignments) {
+        List<Integer> feasibleAllocations = new ArrayList<>();
+        for (int i = 0; i < nTeams; i++) {
+            if (isValidAllocation(umpire, round, i, assignments)) {
+                feasibleAllocations.add(i);
+            }
+        }
+        return feasibleAllocations;
+    }
+
+    private boolean isValidAllocation(int umpire, int round, int game, int[][] assignments) {
+        // Check if the umpire has not visited the same location in the previous q1 - 1 rounds
+        for (int j =0; j< opponents.length;j++){
+            for (int i = 1; i < q1 && round - i >= 0; i++) {
+                if (opponents[round][j] == assignments[umpire][round - i]) {
+                    return false;
+                }
+            }
+            // Check if the umpire has not refereed any of the teams during the previous q2 - 1 rounds
+            for (int k = 1; k < q2 && round - k >= 0; k++) {//deze weet ik nog echt niet hoe ik moet doen
+                if (opponents[umpire][game] == opponents[umpire][round - k]) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
 }
