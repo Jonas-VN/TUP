@@ -59,7 +59,7 @@ public class Problem {
             sb.append("]\n");
         }
     }
-    public void assignUmpires() {
+    public int[] [] assignUmpires() {
         int[][] assignments = new int[nTeams][2*nTeams - 2];
 
         // Wijs in de eerste ronde elke scheidsrechter toe aan een thuisveld
@@ -81,6 +81,7 @@ public class Problem {
 
             }
         }
+        return assignments;
     }
 
 
@@ -89,15 +90,20 @@ public class Problem {
     }
 
     private List<Integer> getValidAllocations(int umpire, int round, int[][] assignments) {
-        List<Integer> feasibleAllocations = new ArrayList<>();
-        // Check if the umpire has not visited the same location in the previous q1 - 1 rounds
-        for (int j =0; j< nTeams-1;j++){
-            for (int i = 1; i < q1 && round - i >= 0; i++) {
-                if (Math.abs(opponents[round][j]) == assignments[umpire][round - i]) {
-                    continue;
-                }
-                feasibleAllocations.add(opponents[round][j]);
+    List<Integer> feasibleAllocations = new ArrayList<>();
+    for (int j = 0; j < nTeams - 1; j++) {
+        boolean isFeasible = true;
+        for (int i = 1; i < q1 && round - i >= 0; i++) {
+            if (Math.abs(opponents[round][j]) == Math.abs(assignments[umpire][round - i])) {
+                isFeasible = false;
+                break; // Skip to the next opponent if the condition is not met
             }
+        }
+        if (isFeasible) {
+            feasibleAllocations.add(opponents[round][j]);
+        }
+    }
+
             // Check if the umpire has not refereed any of the teams during the previous q2 - 1 rounds
             /*
             for (int k = 1; k < q2 && round - k >= 0; k++) {//deze weet ik nog echt niet hoe ik moet doen
@@ -106,8 +112,7 @@ public class Problem {
                 }
             }
              */
-        }
-
+        System.out.println(feasibleAllocations);
         return feasibleAllocations;
     }
 

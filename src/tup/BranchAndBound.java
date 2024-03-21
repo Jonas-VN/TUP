@@ -23,7 +23,8 @@ public class BranchAndBound {
 
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
        // branchAndBound(path, 0, 0);
-        problem.assignUmpires();
+        path = problem.assignUmpires();
+        printPath(path);
     }
 /*
     private void branchAndBound(int[][] path, int umpire, int round) {
