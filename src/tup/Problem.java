@@ -1,8 +1,8 @@
 package tup;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class Problem {
     final int q1;
@@ -64,7 +64,7 @@ public class Problem {
 
         // Wijs in de eerste ronde elke scheidsrechter toe aan een thuisveld
         for (int i = 0; i < nTeams; i++) {
-            assignments[i][0] = Math.abs(opponents[0][i]);
+            assignments[i][0] = (opponents[0][i]);
         }
 
         // Wijs scheidsrechters toe voor de resterende rondes
@@ -91,29 +91,39 @@ public class Problem {
 
     private List<Integer> getValidAllocations(int umpire, int round, int[][] assignments) {
     List<Integer> feasibleAllocations = new ArrayList<>();
-    for (int j = 0; j < nTeams - 1; j++) {
+    List<Integer> previousLocations = getPreviousLocations(umpire, round, assignments);
+    for (int i = 0; i < nTeams - 1; i++) {
         boolean isFeasible = true;
-        for (int i = 1; i < q1 && round - i >= 0; i++) {
-            if (Math.abs(opponents[round][j]) == Math.abs(assignments[umpire][round - i])) {
+        if (opponents[round][i] < 0 ) {
+            if(previousLocations.contains(Math.abs(opponents[round][i]))){
                 isFeasible = false;
-                break; // Skip to the next opponent if the condition is not met
+                continue;
+            }
+        }
+        else {
+            int team = Math.abs(opponents[round][i]);
+            if (previousLocations.contains(Math.abs(opponents[round][team-1]))){
+                isFeasible = false;
+                continue;
             }
         }
         if (isFeasible) {
-            feasibleAllocations.add(opponents[round][j]);
+            feasibleAllocations.add(opponents[round][i]);
         }
     }
-
-            // Check if the umpire has not refereed any of the teams during the previous q2 - 1 rounds
-            /*
-            for (int k = 1; k < q2 && round - k >= 0; k++) {//deze weet ik nog echt niet hoe ik moet doen
-                if (opponents[umpire][game] == opponents[umpire][round - k]) {
-                    return false;
-                }
-            }
-             */
         System.out.println(feasibleAllocations);
         return feasibleAllocations;
+    }
+    public List<Integer> getPreviousLocations(int umpire, int round, int[][] assignments) {
+        List<Integer> previousLocations = new ArrayList<>();
+        for (int i = 1; i < q1 && round - i >= 0; i++) {
+            if (assignments[umpire][round - i] > 0){
+                int team = assignments[umpire][round - i];
+                previousLocations.add(Math.abs(opponents[round-1][team-1]));
+            }
+            else previousLocations.add(Math.abs(assignments[umpire][round - i]));
+        }
+        return previousLocations;
     }
 
 }
