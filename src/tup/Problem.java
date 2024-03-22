@@ -119,7 +119,7 @@ public class Problem {
         for (int i = 1; i < q1 && round - i >= 0; i++) {
             if (assignments[umpire][round - i] > 0){
                 int team = assignments[umpire][round - i];
-                previousLocations.add(Math.abs(opponents[round-1][team-1]));
+                previousLocations.add(Math.abs(opponents[round-i][team-1]));
             }
             else previousLocations.add(Math.abs(assignments[umpire][round - i]));
         }
