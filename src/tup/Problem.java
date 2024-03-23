@@ -10,8 +10,8 @@ public class Problem {
     final int nTeams;
     public final int nUmpires;
     public final int nRounds;
-    final int[][] dist;
-    final int[][] opponents;
+    public final int[][] dist;
+    public final int[][] opponents;
 
     public Problem(int nTeams, int[][] dist, int[][] opponents, int q1, int q2) {
         this.nTeams = nTeams;
@@ -43,6 +43,7 @@ public class Problem {
         sb.append("}");
         return sb.toString();
     }
+
     private static void buildArray(StringBuilder sb, int[][] array2D) {
         int maxWidth = 0;
         for (int[] array1D : array2D) {
@@ -59,6 +60,7 @@ public class Problem {
             sb.append("]\n");
         }
     }
+
     public int[] [] assignUmpires() {
         int[][] assignments = new int[nTeams][2*nTeams - 2];
 
@@ -70,9 +72,9 @@ public class Problem {
         // Wijs scheidsrechters toe voor de resterende rondes
         for (int round = 1; round < 2*nTeams - 2; round++) {
             for (int umpire = 0; umpire < nTeams; umpire++) {
-                List<Integer> feasibleAllocations = getValidAllocations(umpire, round, assignments);
+                List<Integer> feasibleAllocations = getValidAllocations(assignments, umpire, round);
                 if (!feasibleAllocations.isEmpty()){
-                    for (Integer allocation : feasibleAllocations) {
+                    for (Integer allocation : feasibleAllocations) { // Loop is onnodig?
                         assignments[umpire][round] = allocation;
                         break;
                     }
@@ -89,28 +91,28 @@ public class Problem {
         return false;
     }
 
-    private List<Integer> getValidAllocations(int umpire, int round, int[][] assignments) {
-    List<Integer> feasibleAllocations = new ArrayList<>();
-    List<Integer> previousLocations = getPreviousLocations(umpire, round, assignments);
-    for (int i = 0; i < nTeams - 1; i++) {
-        boolean isFeasible = true;
-        if (opponents[round][i] < 0 ) {
-            if(previousLocations.contains(Math.abs(opponents[round][i]))){
-                isFeasible = false;
-                continue;
+    public List<Integer> getValidAllocations(int[][] assignments, int umpire, int round) {
+        List<Integer> feasibleAllocations = new ArrayList<>();
+        List<Integer> previousLocations = getPreviousLocations(umpire, round, assignments);
+        for (int i = 0; i < nTeams - 1; i++) {
+            boolean isFeasible = true;
+            if (opponents[round][i] < 0 ) {
+                if(previousLocations.contains(Math.abs(opponents[round][i]))){
+                    isFeasible = false;
+                    continue;
+                }
+            }
+            else {
+                int team = Math.abs(opponents[round][i]);
+                if (previousLocations.contains(Math.abs(opponents[round][team-1]))){
+                    isFeasible = false;
+                    continue;
+                }
+            }
+            if (isFeasible) {
+                feasibleAllocations.add(opponents[round][i]);
             }
         }
-        else {
-            int team = Math.abs(opponents[round][i]);
-            if (previousLocations.contains(Math.abs(opponents[round][team-1]))){
-                isFeasible = false;
-                continue;
-            }
-        }
-        if (isFeasible) {
-            feasibleAllocations.add(opponents[round][i]);
-        }
-    }
         System.out.println(feasibleAllocations);
         return feasibleAllocations;
     }

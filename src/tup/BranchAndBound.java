@@ -14,17 +14,34 @@ public class BranchAndBound {
     }
 
     public void solve() {
-        int[][] path = new int[problem.nTeams][2*problem.nTeams - 2];
+        int[][] path = new int[problem.nTeams][problem.nRounds];
 
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
         for (int i = 0; i < problem.nTeams; i++) {
-            path[i][0] = i;//note: in debuggen krijgt referee '0' wedstrijd '0' toegewezen, kan misschien verwarring brengen :)
+            path[i][0] = problem.opponents[0][i]; //note: in debuggen krijgt referee '0' wedstrijd '0' toegewezen, kan misschien verwarring brengen :)
         }
 
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
        // branchAndBound(path, 0, 0);
-        path = problem.assignUmpires();
+        //path = problem.assignUmpires();
+        path = this.branchAndBound(path, 0, 1);
         printPath(path);
+    }
+
+    private int[][] branchAndBound(int[][] path, int umpire, int round) {
+        System.out.printf("Umpire: %d\t Round: %d\n", umpire, round);
+        if (round == this.problem.nRounds) return path;
+        List<Integer> feasibleAllocations = this.problem.getValidAllocations(path, umpire, round);
+        if (!feasibleAllocations.isEmpty()) {
+            path[umpire][round] = feasibleAllocations.getFirst();
+            if (umpire == this.problem.nUmpires) this.branchAndBound(path,0, round + 1);
+            else this.branchAndBound(path, umpire + 1, round);
+        }
+        else {
+            System.out.println("This problem is unfeasible :(");
+            System.exit(1);
+        }
+        return path;
     }
 /*
     private void branchAndBound(int[][] path, int umpire, int round) {
