@@ -96,25 +96,25 @@ public class Problem {
         List<Integer> previousLocations = getPreviousLocations(assignments, round, umpire);
         List<Integer> previousTeams = getPreviousTeams(assignments, round, umpire);
         for (int i = 0; i < nTeams - 1; i++) {
-            boolean isFeasible = true;
             if (opponents[round][i] < 0 ) {
-                if(previousLocations.contains(Math.abs(opponents[round][i]))
-                    || previousTeams.contains(Math.abs(opponents[round][i]))){
-                    isFeasible = false;
+                int homeTeam = Math.abs(opponents[round][i]);
+                int awayTeam = i+1;
+                if(previousLocations.contains(homeTeam)
+                    || previousTeams.contains(awayTeam) || previousTeams.contains(homeTeam)){
                     continue;
                 }
             }
             else {
-                int team = Math.abs(opponents[round][i]);
-                if (previousLocations.contains(Math.abs(opponents[round][team-1]))
-                        || previousTeams.contains(Math.abs(opponents[round][team-1]))){
-                    isFeasible = false;
+                int homeTeam = i+1;
+                int awayTeam = Math.abs(opponents[round][i]);
+                if (previousLocations.contains(homeTeam)
+                        || previousTeams.contains(homeTeam)
+                        || previousTeams.contains(awayTeam)){
+
                     continue;
                 }
             }
-            if (isFeasible) {
-                feasibleAllocations.add(opponents[round][i]);
-            }
+            feasibleAllocations.add(opponents[round][i]);
         }
         System.out.println(feasibleAllocations);
         return feasibleAllocations;
