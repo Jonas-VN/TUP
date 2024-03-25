@@ -26,7 +26,7 @@ public class BranchAndBound {
         }
         printPath(path);
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
-       // branchAndBound(path, 0, 0);
+        // branchAndBound(path, 0, 0);
         //path = problem.assignUmpires();
         path = this.branchAndBound(path, 0, 1);
         printPath(path);
@@ -60,40 +60,40 @@ public class BranchAndBound {
         }
         return path;
     }
-/*
-    private void branchAndBound(int[][] path, int umpire, int round) {
-        int uPlus = (umpire % problem.nTeams) + 1; //umpire te bekijken in volgende iteratie
-        int rPlus;
-        if (umpire + 1 == problem.nTeams) {
-            rPlus = round + 1;
-        } else {
-            rPlus = round;
-        }
-        List<Integer> A = problem.getFeasibleAllocations(umpire, round);
-        for (Integer a : A) {
-                if (!problem.canBePruned(a)) {
-                    //path[umpire][round] = a;
-                    printPath(path);
-                    if (round < problem.nTeams - 1) {
-                        branchAndBound(path, uPlus, rPlus);
-                    } else {
-                        int totalDistance = calculateTotalDistance(path);//Hier moet local search worden gedaan
-                        if (totalDistance < bestDistance) {
-                            bestDistance = totalDistance;
-                            for (int i = 0; i < problem.nTeams; i++) {
+    /*
+        private void branchAndBound(int[][] path, int umpire, int round) {
+            int uPlus = (umpire % problem.nTeams) + 1; //umpire te bekijken in volgende iteratie
+            int rPlus;
+            if (umpire + 1 == problem.nTeams) {
+                rPlus = round + 1;
+            } else {
+                rPlus = round;
+            }
+            List<Integer> A = problem.getFeasibleAllocations(umpire, round);
+            for (Integer a : A) {
+                    if (!problem.canBePruned(a)) {
+                        //path[umpire][round] = a;
+                        printPath(path);
+                        if (round < problem.nTeams - 1) {
+                            branchAndBound(path, uPlus, rPlus);
+                        } else {
+                            int totalDistance = calculateTotalDistance(path);//Hier moet local search worden gedaan
+                            if (totalDistance < bestDistance) {
+                                bestDistance = totalDistance;
+                                for (int i = 0; i < problem.nTeams; i++) {
+                                }
                             }
                         }
+                        path[umpire][round] = -1;
                     }
-                    path[umpire][round] = -1;
                 }
+                printPath(path);
             }
-            printPath(path);
-        }
 
 
 
 
- */
+     */
     private int calculateTotalDistance(int[][] path) {
         int totalDistance = 0;
         for (int i = 0; i < problem.nTeams; i++) {

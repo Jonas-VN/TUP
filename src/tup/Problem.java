@@ -93,18 +93,21 @@ public class Problem {
 
     public List<Integer> getValidAllocations(int[][] assignments, int umpire, int round) {
         List<Integer> feasibleAllocations = new ArrayList<>();
-        List<Integer> previousLocations = getPreviousLocations(umpire, round, assignments);
+        List<Integer> previousLocations = getPreviousLocations(assignments, round, umpire);
+        List<Integer> previousTeams = getPreviousTeams(assignments, round, umpire);
         for (int i = 0; i < nTeams - 1; i++) {
             boolean isFeasible = true;
             if (opponents[round][i] < 0 ) {
-                if(previousLocations.contains(Math.abs(opponents[round][i]))){
+                if(previousLocations.contains(Math.abs(opponents[round][i]))
+                    || previousTeams.contains(Math.abs(opponents[round][i]))){
                     isFeasible = false;
                     continue;
                 }
             }
             else {
                 int team = Math.abs(opponents[round][i]);
-                if (previousLocations.contains(Math.abs(opponents[round][team-1]))){
+                if (previousLocations.contains(Math.abs(opponents[round][team-1]))
+                        || previousTeams.contains(Math.abs(opponents[round][team-1]))){
                     isFeasible = false;
                     continue;
                 }
@@ -116,7 +119,7 @@ public class Problem {
         System.out.println(feasibleAllocations);
         return feasibleAllocations;
     }
-    public List<Integer> getPreviousLocations(int umpire, int round, int[][] assignments) {
+    public List<Integer> getPreviousLocations(int [][] assignments, int round, int umpire) {
         List<Integer> previousLocations = new ArrayList<>();
         for (int i = 1; i < q1 && round - i >= 0; i++) {
             if (assignments[umpire][round - i] > 0){
@@ -126,6 +129,15 @@ public class Problem {
             else previousLocations.add(Math.abs(assignments[umpire][round - i]));
         }
         return previousLocations;
+    }
+    private List<Integer> getPreviousTeams(int [][] assignments, int round, int umpire) {
+        List<Integer> previousTeams = new ArrayList<>();
+        for (int i = 1; i <= q2-1 && round - i >= 0; i++) {
+            int previousGame = Math.abs(assignments[umpire][round - i]);
+            previousTeams.add(Math.abs(opponents[round - i][previousGame - 1]));
+            previousTeams.add(previousGame);
+        }
+        return previousTeams;
     }
 
 }

@@ -9,8 +9,7 @@ import java.util.Scanner;
 
 public class InputReader {
     public static Problem readFile(String fileName, int q1, int q2) throws FileNotFoundException {
-        File file = new File(new File("TUP\\src\\io\\input\\" + fileName).getAbsolutePath());
-        System.out.println(file);
+        File file = new File(new File("src\\io\\input\\" + fileName).getAbsolutePath());
         // Read the file
         Scanner scanner = new Scanner(file);
         String line;
