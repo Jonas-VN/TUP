@@ -14,13 +14,17 @@ public class BranchAndBound {
     }
 
     public void solve() {
-        int[][] path = new int[problem.nTeams][problem.nRounds];
+        int[][] path = new int[problem.nUmpires][problem.nRounds];
 
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
-        for (int i = 0; i < problem.nTeams; i++) {
-            path[i][0] = problem.opponents[0][i]; //note: in debuggen krijgt referee '0' wedstrijd '0' toegewezen, kan misschien verwarring brengen :)
+        int i = -1;
+        for (int team = 0; team < problem.nTeams; team++) {
+            if (problem.opponents[0][team] > 0) {
+                path[++i][0] = problem.opponents[0][team];
+            }
+            //path[i][0] = problem.opponents[0][i]; //note: in debuggen krijgt referee '0' wedstrijd '0' toegewezen, kan misschien verwarring brengen :)
         }
-
+        printPath(path);
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
        // branchAndBound(path, 0, 0);
         //path = problem.assignUmpires();
@@ -30,16 +34,29 @@ public class BranchAndBound {
 
     private int[][] branchAndBound(int[][] path, int umpire, int round) {
         System.out.printf("Umpire: %d\t Round: %d\n", umpire, round);
-        if (round == this.problem.nRounds) return path;
+        if (round == this.problem.nRounds) {
+            // Constructed a full feasible path
+            printPath(path);
+            // TODO: Tijdelijke exit na eerste oplossing
+            System.exit(0);
+        }
         List<Integer> feasibleAllocations = this.problem.getValidAllocations(path, umpire, round);
         if (!feasibleAllocations.isEmpty()) {
-            path[umpire][round] = feasibleAllocations.getFirst();
-            if (umpire == this.problem.nUmpires) this.branchAndBound(path,0, round + 1);
-            else this.branchAndBound(path, umpire + 1, round);
-        }
-        else {
-            System.out.println("This problem is unfeasible :(");
-            System.exit(1);
+            // TODO: Sort feasibleAllocations on lowest distance
+//            feasibleAllocations.sort((a, b) -> {
+//                int prevLocation = path[umpire][round - 1];
+//                int aDistance = this.problem.dist[prevLocation - 1][a - 1];
+//                int bDistance = this.problem.dist[prevLocation - 1][b - 1];
+//                return Integer.compare(aDistance, bDistance);
+//            });
+            for (Integer allocation : feasibleAllocations) {
+                path[umpire][round] = allocation;
+                if (umpire == this.problem.nUmpires - 1) {
+                    printPath(path);
+                    this.branchAndBound(path, 0, round + 1);
+                }
+                else this.branchAndBound(path, umpire + 1, round);
+            }
         }
         return path;
     }
