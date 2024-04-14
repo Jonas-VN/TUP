@@ -26,6 +26,7 @@ public class InputReader {
 
         scanner.close();
         return new Problem(nTeams, dist, opponents, q1, q2);
+
     }
 
     private static int[][] parseArray(Scanner scanner, int nTeams) {

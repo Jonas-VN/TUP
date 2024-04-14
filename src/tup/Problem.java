@@ -95,7 +95,7 @@ public class Problem {
         List<Integer> feasibleAllocations = new ArrayList<>();
         List<Integer> previousLocations = getPreviousLocations(assignments, round, umpire);
         List<Integer> previousTeams = getPreviousTeams(assignments, round, umpire);
-        for (int i = 0; i < nTeams - 1; i++) {
+        for (int i = 0; i < nTeams; i++) {
             if (opponents[round][i] < 0 ) {
                 int homeTeam = Math.abs(opponents[round][i]);
                 int awayTeam = i+1;
