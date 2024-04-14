@@ -108,6 +108,7 @@ public class LowerBound {
             //na de laatste iteratie heb je van alle rondes de min afstand tussen 2 rondes door hungarian
             //de hungarian houdt nog geen rekening met q-constraints enkel tussen 2 wedstrijden op zich
         }
+
         // now we try to strengthen the bounds using Algorithm 2
         double[][] S = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the solutions for the subproblems
         double[][] LB = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
@@ -122,9 +123,10 @@ public class LowerBound {
                 LB[r_ix][r2_ix] = S[r_ix][r_ix + 1] + LB[r_ix + 1][r2_ix];
             }
         }
-
+        printArray(LB);//marker 1 voor LB "zie onder"
         for (int k = 2; k <= problem.nRounds - 1; k++) {
             int r = problem.nRounds - k;
+
             while (r >= 1) {
                 for (int r3 = r + k - 2; r3 >= r; r3--) {
                     if (S[r3 - 1][r + k - 1] > 0) {
@@ -145,7 +147,7 @@ public class LowerBound {
         System.out.println("Initial lower bounds");
         printArrayInt(LBI);
         System.out.println("Improved lower bounds");
-        printArray(LB);
+        printArray(LB);// hier zie je dat LB nog steeds hetzelfde is als marker 1 dus er klopt iets niet, wss omdat S niet aangepast wordt
         System.out.println("S matrix");
         printArray(S);
 
