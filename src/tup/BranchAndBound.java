@@ -10,7 +10,7 @@ public class BranchAndBound {
 
     public BranchAndBound(Problem problem) {
         this.problem = problem;
-        bestSolution = new int[problem.nTeams][problem.nTeams];
+        bestSolution = new int[problem.nUmpires][problem.nRounds];
     }
 
     public void solve() {
@@ -29,35 +29,40 @@ public class BranchAndBound {
         // branchAndBound(path, 0, 0);
         //path = problem.assignUmpires();
         path = this.branchAndBound(path, 0, 1);
-        printPath(path);
+        System.out.println("Best solution: ");
+        printPath(bestSolution);
+        System.out.println("Distance: " + bestDistance);
     }
 
     private int[][] branchAndBound(int[][] path, int umpire, int round) {
-        System.out.printf("Umpire: %d\t Round: %d\n", umpire, round);
+        //System.out.printf("Umpire: %d\t Round: %d\n", umpire, round);
         if (round == this.problem.nRounds) {
             // Constructed a full feasible path
-            printPath(path);
-            // TODO: Tijdelijke exit na eerste oplossing
-            System.exit(0);
+            int cost = calculateTotalDistance(path);
+            if (cost < bestDistance) {
+                System.out.println("New BEST solution found with cost " + cost + "! :)");
+                printPath(path);
+
+                bestDistance = cost;
+                for (int _umpire = 0; _umpire < this.problem.nUmpires; _umpire++) {
+                    if (this.problem.nRounds >= 0)
+                        System.arraycopy(path[_umpire], 0, bestSolution[_umpire], 0, this.problem.nRounds);
+                }
+            }
+            return path;
         }
         List<Integer> feasibleAllocations = this.problem.getValidAllocations(path, umpire, round);
         if (!feasibleAllocations.isEmpty()) {
-            // TODO: Sort feasibleAllocations on lowest distance
-//            feasibleAllocations.sort((a, b) -> {
-//                int prevLocation = path[umpire][round - 1];
-//                int aDistance = this.problem.dist[prevLocation - 1][a - 1];
-//                int bDistance = this.problem.dist[prevLocation - 1][b - 1];
-//                return Integer.compare(aDistance, bDistance);
-//            });
             for (Integer allocation : feasibleAllocations) {
                 path[umpire][round] = allocation;
                 if (umpire == this.problem.nUmpires - 1) {
-                    printPath(path);
+                    //printPath(path);
                     this.branchAndBound(path, 0, round + 1);
                 }
                 else this.branchAndBound(path, umpire + 1, round);
             }
         }
+        path[umpire][round] = 0;
         return path;
     }
     /*
@@ -96,9 +101,11 @@ public class BranchAndBound {
      */
     private int calculateTotalDistance(int[][] path) {
         int totalDistance = 0;
-        for (int i = 0; i < problem.nTeams; i++) {
-            for (int j = 0; j < problem.nTeams - 1; j++) {
-                totalDistance += problem.dist[path[i][j]][path[i][j + 1]];
+        for (int umpire = 0; umpire < problem.nUmpires; umpire++) {
+            for (int round = 1; round < problem.nRounds; round++) {
+                int prevLoc = path[umpire][round - 1] - 1;
+                int currLoc = path[umpire][round] - 1;
+                totalDistance += problem.dist[prevLoc][currLoc];
             }
         }
         return totalDistance;

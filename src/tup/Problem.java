@@ -99,8 +99,9 @@ public class Problem {
             if (opponents[round][i] < 0 ) {
                 int homeTeam = Math.abs(opponents[round][i]);
                 int awayTeam = i+1;
-                if(previousLocations.contains(homeTeam)
-                    || previousTeams.contains(awayTeam) || previousTeams.contains(homeTeam)){
+                if (previousLocations.contains(homeTeam)
+                        || previousTeams.contains(awayTeam)
+                        || previousTeams.contains(homeTeam)) {
                     continue;
                 }
             }
@@ -109,14 +110,30 @@ public class Problem {
                 int awayTeam = Math.abs(opponents[round][i]);
                 if (previousLocations.contains(homeTeam)
                         || previousTeams.contains(homeTeam)
-                        || previousTeams.contains(awayTeam)){
-
+                        || previousTeams.contains(awayTeam)) {
                     continue;
                 }
             }
             feasibleAllocations.add(opponents[round][i]);
         }
-        System.out.println(feasibleAllocations);
+
+        feasibleAllocations.removeIf(num -> num < 0);
+
+        List<Integer> alreadyUsedThisRound = new ArrayList<>();
+        for (int i = 0; i < nUmpires; i++){
+            if (assignments[i][round] != 0){
+                alreadyUsedThisRound.add(assignments[i][round]);
+            }
+        }
+        feasibleAllocations.removeIf(alreadyUsedThisRound::contains);
+
+        // Sort on distance to previous location
+        feasibleAllocations.sort((a, b) -> {
+            int prevLocation = assignments[umpire][round - 1];
+            int aDistance = this.dist[prevLocation - 1][a - 1];
+            int bDistance = this.dist[prevLocation - 1][b - 1];
+            return Integer.compare(aDistance, bDistance);
+        });
         return feasibleAllocations;
     }
     public List<Integer> getPreviousLocations(int [][] assignments, int round, int umpire) {
