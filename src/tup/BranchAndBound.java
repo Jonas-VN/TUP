@@ -39,7 +39,7 @@ public class BranchAndBound {
         if (round == this.problem.nRounds) {
             // Constructed a full feasible path
             int cost = calculateTotalDistance(path);
-            if (cost < bestDistance) {
+            if (cost < bestDistance && testVenueFeasibility(path)) {
                 System.out.println("New BEST solution found with cost " + cost + "! :)");
                 printPath(path);
 
@@ -65,40 +65,24 @@ public class BranchAndBound {
         path[umpire][round] = 0;
         return path;
     }
-    /*
-        private void branchAndBound(int[][] path, int umpire, int round) {
-            int uPlus = (umpire % problem.nTeams) + 1; //umpire te bekijken in volgende iteratie
-            int rPlus;
-            if (umpire + 1 == problem.nTeams) {
-                rPlus = round + 1;
-            } else {
-                rPlus = round;
-            }
-            List<Integer> A = problem.getFeasibleAllocations(umpire, round);
-            for (Integer a : A) {
-                    if (!problem.canBePruned(a)) {
-                        //path[umpire][round] = a;
-                        printPath(path);
-                        if (round < problem.nTeams - 1) {
-                            branchAndBound(path, uPlus, rPlus);
-                        } else {
-                            int totalDistance = calculateTotalDistance(path);//Hier moet local search worden gedaan
-                            if (totalDistance < bestDistance) {
-                                bestDistance = totalDistance;
-                                for (int i = 0; i < problem.nTeams; i++) {
-                                }
-                            }
-                        }
-                        path[umpire][round] = -1;
-                    }
-                }
-                printPath(path);
+
+    boolean testVenueFeasibility(int[][] path) {
+        for (int umpire = 0; umpire < this.problem.nUmpires; umpire++) {
+            boolean[] visited = new boolean[this.problem.nTeams];
+            Arrays.fill(visited, false);
+            for (int round = 0; round < this.problem.nRounds; round++) {
+                int venue = path[umpire][round] - 1;
+                visited[venue] = true;
             }
 
+            for (int i = 0; i < this.problem.nTeams; i++) {
+                if (!visited[i]) return false;
+            }
+        }
+        return true;
+    }
 
 
-
-     */
     private int calculateTotalDistance(int[][] path) {
         int totalDistance = 0;
         for (int umpire = 0; umpire < problem.nUmpires; umpire++) {
