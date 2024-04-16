@@ -17,17 +17,16 @@ public class BranchAndBound {
         int[][] path = new int[problem.nUmpires][problem.nRounds];
 
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
-        int i = -1;
+        int umpire = 0;
         for (int team = 0; team < problem.nTeams; team++) {
-            if (problem.opponents[0][team] > 0) {
-                path[++i][0] = problem.opponents[0][team];
+            if (problem.opponents[0][team] < 0) {
+                path[umpire++][0] = -problem.opponents[0][team];
             }
             //path[i][0] = problem.opponents[0][i]; //note: in debuggen krijgt referee '0' wedstrijd '0' toegewezen, kan misschien verwarring brengen :)
         }
         printPath(path);
+
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
-        // branchAndBound(path, 0, 0);
-        //path = problem.assignUmpires();
         path = this.branchAndBound(path, 0, 1);
         System.out.println("Best solution: ");
         printPath(bestSolution);
@@ -52,6 +51,7 @@ public class BranchAndBound {
             return path;
         }
         List<Integer> feasibleAllocations = this.problem.getValidAllocations(path, umpire, round);
+        //System.out.println("Feasible allocations for umpire " + umpire + ": " + feasibleAllocations);
         if (!feasibleAllocations.isEmpty()) {
             for (Integer allocation : feasibleAllocations) {
                 path[umpire][round] = allocation;
@@ -71,44 +71,40 @@ public class BranchAndBound {
             boolean[] visited = new boolean[this.problem.nTeams];
             Arrays.fill(visited, false);
             for (int round = 0; round < this.problem.nRounds; round++) {
-                int venue = path[umpire][round] - 1;
-                visited[venue] = true;
+                int homeTeam = path[umpire][round];
+                visited[homeTeam - 1] = true;
             }
 
             for (int i = 0; i < this.problem.nTeams; i++) {
-                if (!visited[i]) return false;
+                if (!visited[i]) {
+                    return false;
+                }
             }
         }
         return true;
     }
 
-
     private int calculateTotalDistance(int[][] path) {
         int totalDistance = 0;
         for (int umpire = 0; umpire < problem.nUmpires; umpire++) {
             for (int round = 1; round < problem.nRounds; round++) {
-                int prevLoc = path[umpire][round - 1] - 1;
-                int currLoc = path[umpire][round] - 1;
-                totalDistance += problem.dist[prevLoc][currLoc];
+                int prevRound = round - 1;
+                int prevHomeTeam = path[umpire][prevRound];
+
+                int currHomeTeam = path[umpire][round];
+                totalDistance += problem.dist[prevHomeTeam - 1][currHomeTeam - 1];
             }
         }
         return totalDistance;
     }
 
-
-
     public String getBestSolution() {
         return Arrays.deepToString(bestSolution);
     }
 
-
     public int getBestDistance() {
         return bestDistance;
     }
-
-
-
-
 
     private void printPath(int[][] path) {
         System.out.println("-------------------------------------------------------------------------------------");
