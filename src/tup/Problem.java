@@ -1,5 +1,6 @@
 package tup;
 
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,18 +61,14 @@ public class Problem {
         }
     }
 
-    public boolean canBePruned(Integer a) {//deze snap ik nog niet helemaal
-        return false;
-    }
-
     public List<Integer> getValidAllocations(int[][] assignments, int umpire, int round) {
         // feasibleAllocations contains all feasible home teams (NO INDEXES)
         List<Integer> feasibleAllocations = new ArrayList<>();
         List<Integer> previousLocations = getPreviousLocations(assignments, round, umpire);
         List<Integer> previousTeams = getPreviousTeams(assignments, round, umpire);
-        for (int i = 0; i < nTeams; i++) {
-            if (opponents[round][i] < 0 ) {
-                int homeTeam = -opponents[round][i];
+        for (int i = 0; i < this.nTeams; i++) {
+            if (this.opponents[round][i] < 0 ) {
+                int homeTeam = -this.opponents[round][i];
                 int awayTeam = i+1;
 
                 if (!previousTeams.contains(awayTeam) && !previousTeams.contains(homeTeam) && !previousLocations.contains(homeTeam))
@@ -80,7 +77,7 @@ public class Problem {
         }
 
         List<Integer> alreadyUsedThisRound = new ArrayList<>();
-        for (int i = 0; i < nUmpires; i++){
+        for (int i = 0; i < this.nUmpires; i++){
             if (assignments[i][round] != 0){
                 alreadyUsedThisRound.add(assignments[i][round]);
             }
@@ -100,7 +97,7 @@ public class Problem {
 
     public List<Integer> getPreviousLocations(int [][] assignments, int round, int umpire) {
         List<Integer> previousLocations = new ArrayList<>();
-        for (int i = 1; i < q1 && round - i >= 0; i++) {
+        for (int i = 1; i < this.q1 && round - i >= 0; i++) {
             int homeTeam = assignments[umpire][round - i];
             previousLocations.add(homeTeam);
         }
@@ -109,9 +106,9 @@ public class Problem {
 
     private List<Integer> getPreviousTeams(int [][] assignments, int round, int umpire) {
         List<Integer> previousTeams = new ArrayList<>();
-        for (int i = 1; i < q2 && round - i >= 0; i++) {
+        for (int i = 1; i < this.q2 && round - i >= 0; i++) {
             int homeTeam = assignments[umpire][round - i];
-            int awayTeam = opponents[round - i][homeTeam - 1];
+            int awayTeam = this.opponents[round - i][homeTeam - 1];
             previousTeams.add(homeTeam);
             previousTeams.add(awayTeam);
         }
