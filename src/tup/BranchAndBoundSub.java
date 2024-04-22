@@ -127,5 +127,4 @@ public class BranchAndBoundSub {
         }
         return previousTeams;
     }
-
 }

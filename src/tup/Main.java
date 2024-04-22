@@ -16,6 +16,5 @@ public class Main {
         // lb.solve();
 
        System.out.println("Execution time: " + (endTime - startTime) + "ms");
-
     }
 }
