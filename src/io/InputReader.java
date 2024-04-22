@@ -16,7 +16,7 @@ public class InputReader {
 
         line = removePadding(scanner, "nTeams");
         assert line != null;
-        int nTeams = Integer.parseInt(line.split("=")[1].split(";")[0]);
+        int nTeams = Integer.parseInt(line.split("=")[1].split(";")[0].trim());
 
         removePadding(scanner, "dist");
         int[][] dist = parseArray(scanner, nTeams);

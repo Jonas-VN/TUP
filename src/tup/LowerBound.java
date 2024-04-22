@@ -6,6 +6,7 @@ import java.util.Arrays;
 public class LowerBound {
     private Problem problem;
     private final int nrOfMatches;//aantal matches per ronde
+    private double bestDistance;
 
     public LowerBound(Problem problem) {
         this.problem = problem;
@@ -76,7 +77,7 @@ public class LowerBound {
 
             //Hungarian hungarian = new Hungarian(d);
             Hungarian hungarian = new Hungarian();
-            hungarian.assignmentProblem(d);
+            Hungarian.assignmentProblem(d);
             int [] solution = hungarian.xy;
 
             // Meaning of solution: -> 1,5,2,4,6,3,0,7 for the first to second round
@@ -85,9 +86,8 @@ public class LowerBound {
             // we have to look into solution[A] = solution[0] => 1 => this is an index so + 1 = 2 = B
             // =>  use these values as index-1 in solution[] to see where the umpire should go to next
 
-            for (int u = 0; u < home1.length; u++) {
-                int from = home1[u];
-                int to = solution[home1[u] - 1]; // to is the index for dest matrix to know the distance
+            for (int from : home1) {
+                int to = solution[from - 1]; // to is the index for dest matrix to know the distance
                 int distance = d[from - 1][to];
                 totalDistance += distance;
 
@@ -104,7 +104,7 @@ public class LowerBound {
             }
 
             LBI[fromRound][toRound] = totalDistance;
-            System.out.println("Round " + fromRound + " to " + toRound + " has Mindistance " + totalDistance);
+           // System.out.println("Round " + fromRound + " to " + toRound + " has Mindistance " + totalDistance);
             //na de laatste iteratie heb je van alle rondes de min afstand tussen 2 rondes door hungarian
             //de hungarian houdt nog geen rekening met q-constraints enkel tussen 2 wedstrijden op zich
         }
@@ -123,7 +123,7 @@ public class LowerBound {
                 LB[r_ix][r2_ix] = S[r_ix][r_ix + 1] + LB[r_ix + 1][r2_ix];
             }
         }
-        printArray(LB);//marker 1 voor LB "zie onder"
+        //printArray(LB);//marker 1 voor LB "zie onder"
         for (int k = 2; k <= problem.nRounds - 1; k++) {
             int r = problem.nRounds - k;
 
@@ -131,6 +131,9 @@ public class LowerBound {
                 for (int r3 = r + k - 2; r3 >= r; r3--) {
                     if (S[r3 - 1][r + k - 1] > 0) {
                         continue; // do not resolve already solved subproblems
+                    }
+                    if (S[r3 - 1][r + k - 1] == 0) {
+                        //S[r3 - 1][r + k - 1] = valueOfSolutionOfSubproblemWithRounds(r3, r + k);//hier zit de fout
                     }
 
                     for (int r1 = r3; r1 >= 1; r1--) {
@@ -143,16 +146,19 @@ public class LowerBound {
                 r = r - k;
             }
         }
-        System.out.println();
-        System.out.println("Initial lower bounds");
-        printArrayInt(LBI);
-        System.out.println("Improved lower bounds");
-        printArray(LB);// hier zie je dat LB nog steeds hetzelfde is als marker 1 dus er klopt iets niet, wss omdat S niet aangepast wordt
-        System.out.println("S matrix");
-        printArray(S);
+//        System.out.println();
+//        System.out.println("Initial lower bounds");
+//        printArrayInt(LBI);
+//        System.out.println("Improved lower bounds");
+//        printArray(LB);// hier zie je dat LB nog steeds hetzelfde is als marker 1 dus er klopt iets niet, wss omdat S niet aangepast wordt
+//        System.out.println("S matrix");
+//        printArray(S);
+        bestDistance= LB[0][problem.nRounds - 1];
 
 
     }
+
+
     void getMatchesOfRound(int[] r, int[] h, int[] a) {
         // Create a copy of the round array because we do not want to change the original array
         int[] round = new int[r.length];
@@ -182,23 +188,23 @@ public class LowerBound {
 
     }
     void printArray(double[][] array) {
-        for (int i = 0; i < array.length; i++) {
-            for (int j = 0; j < array[i].length; j++) {
-                System.out.print(array[i][j] + "\t");
+        for (double[] doubles : array) {
+            for (double aDouble : doubles) {
+                System.out.print(aDouble + "\t");
             }
             System.out.println();
         }
     }
     void printArrayInt(int[][] array) {
-        for (int i = 0; i < array.length; i++) {
-            for (int j = 0; j < array[i].length; j++) {
-                System.out.print(array[i][j] + "\t");
+        for (int[] ints : array) {
+            for (int anInt : ints) {
+                System.out.print(anInt + "\t");
             }
             System.out.println();
         }
     }
-
-
-
+    public double getLowerBound() {
+        return bestDistance;
+    }
 
 }
