@@ -133,7 +133,8 @@ public class LowerBound {
                         continue; // do not resolve already solved subproblems
                     }
                     if (S[r3 - 1][r + k - 1] == 0) {
-                        //S[r3 - 1][r + k - 1] = valueOfSolutionOfSubproblemWithRounds(r3, r + k);//hier zit de fout
+                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k);
+                        S[r3 - 1][r + k - 1] = bbsub.solve();//hier zit de fout
                     }
 
                     for (int r1 = r3; r1 >= 1; r1--) {
