@@ -1,6 +1,5 @@
 package tup;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,6 +9,7 @@ public class BranchAndBound {
     private int[][] bestSolution;
     private int[] numberOfUniqueVenuesVisited;
     private boolean[][] visited;
+    private LowerBound lowerBound;
 
     public BranchAndBound(Problem problem) {
         this.problem = problem;
@@ -24,6 +24,11 @@ public class BranchAndBound {
                 visited[i][j] = false;
             }
         }
+
+        long StartTime = System.currentTimeMillis();
+        lowerBound = new LowerBound(problem);
+        lowerBound.solve();
+        System.out.println("Lower bound calculation time: " + (System.currentTimeMillis() - StartTime) + "ms");
     }
 
     public void solve() {
@@ -40,7 +45,7 @@ public class BranchAndBound {
         }
 
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
-        path = this.branchAndBound(path, 0, 1, 0);
+        this.branchAndBound(path, 0, 1, 0);
         System.out.println("Best solution: ");
         printPath(bestSolution);
         System.out.println("Distance: " + bestDistance);
@@ -66,16 +71,15 @@ public class BranchAndBound {
         if (!feasibleAllocations.isEmpty()) {
             for (Integer allocation : feasibleAllocations) {
                 path[umpire][round] = allocation;
-
                 boolean firstVisit = !visited[umpire][allocation - 1];
                 if (firstVisit) {
                     visited[umpire][allocation - 1] = true;
                     numberOfUniqueVenuesVisited[umpire]++;
                 }
 
-                if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round) {
-                    int prevHomeTeam = path[umpire][round - 1];
-                    int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
+                int prevHomeTeam = path[umpire][round - 1];
+                int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
+                if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round && currentCost + extraCost + lowerBound.getLowerBound(round) < bestDistance) {
                     if (umpire == this.problem.nUmpires - 1) {
                         this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
                     }

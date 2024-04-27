@@ -9,14 +9,15 @@ public class BranchAndBoundSub {
     private int firstRound;
     private int lastRound;
     private int[][] bestSolution;
+    private LowerBound lowerbound;
 
 
-    public BranchAndBoundSub(Problem problem, int firstRound, int lastRound) {
+    public BranchAndBoundSub(Problem problem, int firstRound, int lastRound, LowerBound lowerbound) {
         this.problem = problem;
         this.firstRound = firstRound;
         this.lastRound = lastRound;
         bestSolution = new int[problem.nUmpires][lastRound-firstRound+1];
-
+        this.lowerbound = lowerbound;
     }
 
     public int solve() {
@@ -30,19 +31,13 @@ public class BranchAndBoundSub {
         }
 
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
-        path = this.branchAndBound(path, 0, firstRound,0);
-        System.out.println("Best solution: ");
-        System.out.println("Distance: " + bestDistance);
+        this.branchAndBound(path, 0, firstRound,0);
         return bestDistance;
     }
     private int[][] branchAndBound(int[][] path, int umpire, int round, int currentCost) {
         if (round == lastRound ) {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
-                // The constructed path is better than the current best path! :)
-                System.out.println("New BEST solution found with cost " + currentCost + "! :)");
-                //printPath(path);
-                // Copy solution
                 bestDistance = currentCost;
                 for (int _umpire = 0; _umpire < this.problem.nUmpires; _umpire++) {
                     System.arraycopy(path[_umpire], 0, bestSolution[_umpire], 0, lastRound-firstRound+1);
@@ -58,11 +53,12 @@ public class BranchAndBoundSub {
 
                 int prevHomeTeam = path[umpire][round-firstRound+1 - 1];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
-                if (umpire == this.problem.nUmpires - 1) {
-                    this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
+                if (currentCost + extraCost + lowerbound.getLowerBound(round + 1, lastRound) < bestDistance) {
+                    if (umpire == this.problem.nUmpires - 1) {
+                        this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
+                    }
+                    else this.branchAndBound(path, umpire + 1, round, currentCost + extraCost);
                 }
-                else this.branchAndBound(path, umpire + 1, round, currentCost + extraCost);
-
 
                 // Backtrack
                 path[umpire][round-firstRound+1] = 0;
@@ -105,6 +101,7 @@ public class BranchAndBoundSub {
 
         return feasibleAllocations;
     }
+
     public List<Integer> getPreviousLocations(int [][] assignments, int round, int umpire) {
         List<Integer> previousLocations = new ArrayList<>();
         for (int i = 1; i < problem.q1 && round - i -firstRound+1 >= 0; i++) {
@@ -124,5 +121,4 @@ public class BranchAndBoundSub {
         }
         return previousTeams;
     }
-
 }

@@ -6,12 +6,12 @@ import java.util.Arrays;
 public class LowerBound {
     private Problem problem;
     private final int nrOfMatches;//aantal matches per ronde
-    private double bestDistance;
+    private double[][] LB; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
 
     public LowerBound(Problem problem) {
         this.problem = problem;
         this.nrOfMatches= problem.nTeams / 2;
-
+        this.LB = new double[problem.nRounds][problem.nRounds];
     }
 
     public void solve(){
@@ -111,7 +111,7 @@ public class LowerBound {
 
         // now we try to strengthen the bounds using Algorithm 2
         double[][] S = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the solutions for the subproblems
-        double[][] LB = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
+
 
         int r_ix, r2_ix;
         for (int r = problem.nRounds - 1; r >= 1; r--) {
@@ -133,7 +133,7 @@ public class LowerBound {
                         continue; // do not resolve already solved subproblems
                     }
                     if (S[r3 - 1][r + k - 1] == 0) {
-                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k);
+                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k, this);
                         S[r3 - 1][r + k - 1] = bbsub.solve();
                     }
 
@@ -147,17 +147,7 @@ public class LowerBound {
                 r = r - k;
             }
         }
-//        System.out.println();
-//        System.out.println("Initial lower bounds");
-//        printArrayInt(LBI);
-//        System.out.println("Improved lower bounds");
-//        printArray(LB);// hier zie je dat LB nog steeds hetzelfde is als marker 1 dus er klopt iets niet, wss omdat S niet aangepast wordt
-//        System.out.println("S matrix");
-//        printArray(S);
-
-
     }
-
 
     void getMatchesOfRound(int[] r, int[] h, int[] a) {
         // Create a copy of the round array because we do not want to change the original array
@@ -187,24 +177,12 @@ public class LowerBound {
         }
 
     }
-    void printArray(double[][] array) {
-        for (double[] doubles : array) {
-            for (double aDouble : doubles) {
-                System.out.print(aDouble + "\t");
-            }
-            System.out.println();
-        }
-    }
-    void printArrayInt(int[][] array) {
-        for (int[] ints : array) {
-            for (int anInt : ints) {
-                System.out.print(anInt + "\t");
-            }
-            System.out.println();
-        }
-    }
-    public double getLowerBound() {
-        return bestDistance;
+
+    public double getLowerBound(int round) {
+        return LB[round][problem.nRounds - 1];
     }
 
+    public double getLowerBound(int fromRound, int toRound) {
+        return LB[fromRound - 1][toRound - 1];
+    }
 }
