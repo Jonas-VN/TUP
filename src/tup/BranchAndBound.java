@@ -1,5 +1,6 @@
 package tup;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -9,7 +10,6 @@ public class BranchAndBound {
     private int[][] bestSolution;
     private int[] numberOfUniqueVenuesVisited;
     private boolean[][] visited;
-    private LowerBound lowerBound;
 
     public BranchAndBound(Problem problem) {
         this.problem = problem;
@@ -24,10 +24,6 @@ public class BranchAndBound {
                 visited[i][j] = false;
             }
         }
-
-        lowerBound = new LowerBound(problem);
-        lowerBound.solve();
-        System.out.println("Lower bound finished");
     }
 
     public void solve() {
@@ -77,11 +73,9 @@ public class BranchAndBound {
                     numberOfUniqueVenuesVisited[umpire]++;
                 }
 
-                int prevHomeTeam = path[umpire][round - 1];
-                int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
-                //if (currentCost + extraCost + lowerBound.getLowerBound(round) >= bestDistance) System.out.println("Pruned by lower bound!");
-                if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round||
-                        currentCost + extraCost + lowerBound.getLowerBound(round) >= bestDistance) {
+                if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round) {
+                    int prevHomeTeam = path[umpire][round - 1];
+                    int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
                     if (umpire == this.problem.nUmpires - 1) {
                         this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
                     }

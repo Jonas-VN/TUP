@@ -7,12 +7,11 @@ public class LowerBound {
     private Problem problem;
     private final int nrOfMatches;//aantal matches per ronde
     private double bestDistance;
-    private double[][] LB;
 
     public LowerBound(Problem problem) {
         this.problem = problem;
         this.nrOfMatches= problem.nTeams / 2;
-        LB = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
+
     }
 
     public void solve(){
@@ -105,13 +104,14 @@ public class LowerBound {
             }
 
             LBI[fromRound][toRound] = totalDistance;
-            // System.out.println("Round " + fromRound + " to " + toRound + " has Mindistance " + totalDistance);
+           // System.out.println("Round " + fromRound + " to " + toRound + " has Mindistance " + totalDistance);
             //na de laatste iteratie heb je van alle rondes de min afstand tussen 2 rondes door hungarian
             //de hungarian houdt nog geen rekening met q-constraints enkel tussen 2 wedstrijden op zich
         }
 
         // now we try to strengthen the bounds using Algorithm 2
         double[][] S = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the solutions for the subproblems
+        double[][] LB = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
 
         int r_ix, r2_ix;
         for (int r = problem.nRounds - 1; r >= 1; r--) {
@@ -135,9 +135,6 @@ public class LowerBound {
                     if (S[r3 - 1][r + k - 1] == 0) {
                         BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k);
                         S[r3 - 1][r + k - 1] = bbsub.solve();
-                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k, this);
-                        int sol = bbsub.solve();
-                        S[r3 - 1][r + k - 1] = sol == Integer.MAX_VALUE ? 0.0 : sol;//hier zit de fout
                     }
 
                     for (int r1 = r3; r1 >= 1; r1--) {
@@ -206,8 +203,8 @@ public class LowerBound {
             System.out.println();
         }
     }
-    public double getLowerBound(int round) {
-        return LB[round][problem.nRounds - 1];
+    public double getLowerBound() {
+        return bestDistance;
     }
 
 }

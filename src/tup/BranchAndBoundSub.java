@@ -9,15 +9,13 @@ public class BranchAndBoundSub {
     private int firstRound;
     private int lastRound;
     private int[][] bestSolution;
-    private LowerBound lowerBound;
 
 
-    public BranchAndBoundSub(Problem problem, int firstRound, int lastRound, LowerBound lowerBound) {
+    public BranchAndBoundSub(Problem problem, int firstRound, int lastRound) {
         this.problem = problem;
         this.firstRound = firstRound;
         this.lastRound = lastRound;
         bestSolution = new int[problem.nUmpires][lastRound-firstRound+1];
-        this.lowerBound = lowerBound;
 
     }
 
@@ -60,12 +58,11 @@ public class BranchAndBoundSub {
 
                 int prevHomeTeam = path[umpire][round-firstRound+1 - 1];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
-                //if (currentCost + extraCost + lowerBound.getLowerBound(round) >= bestDistance) {
-                    if (umpire == this.problem.nUmpires - 1) {
-                        this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
-                    }
-                    else this.branchAndBound(path, umpire + 1, round, currentCost + extraCost);
-                //}
+                if (umpire == this.problem.nUmpires - 1) {
+                    this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
+                }
+                else this.branchAndBound(path, umpire + 1, round, currentCost + extraCost);
+
 
                 // Backtrack
                 path[umpire][round-firstRound+1] = 0;
@@ -127,4 +124,5 @@ public class BranchAndBoundSub {
         }
         return previousTeams;
     }
+
 }
