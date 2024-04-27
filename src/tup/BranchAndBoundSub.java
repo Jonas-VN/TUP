@@ -34,7 +34,9 @@ public class BranchAndBoundSub {
         this.branchAndBound(path, 0, firstRound,0);
         return bestDistance;
     }
-    private int[][] branchAndBound(int[][] path, int umpire, int round, int currentCost) {
+
+    private void branchAndBound(int[][] path, int umpire, int round, int currentCost) {
+        if (lowerbound.shutdown) return;
         if (round == lastRound ) {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
@@ -43,7 +45,7 @@ public class BranchAndBoundSub {
                     System.arraycopy(path[_umpire], 0, bestSolution[_umpire], 0, lastRound-firstRound+1);
                 }
             }
-            return path;
+            return;
         }
 
         List<Integer> feasibleAllocations = this.getValidAllocations(path, umpire, round);
@@ -65,7 +67,6 @@ public class BranchAndBoundSub {
 
             }
         }
-        return path;
     }
 
     public List<Integer> getValidAllocations(int[][] assignments, int umpire, int round) {

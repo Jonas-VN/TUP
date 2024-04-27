@@ -7,6 +7,7 @@ public class LowerBound {
     private Problem problem;
     private final int nrOfMatches;//aantal matches per ronde
     private double[][] LB; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
+    public boolean shutdown = false;
 
     public LowerBound(Problem problem) {
         this.problem = problem;
@@ -129,6 +130,8 @@ public class LowerBound {
 
             while (r >= 1) {
                 for (int r3 = r + k - 2; r3 >= r; r3--) {
+                    if (shutdown) return;
+
                     if (S[r3 - 1][r + k - 1] > 0) {
                         continue; // do not resolve already solved subproblems
                     }

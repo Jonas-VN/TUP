@@ -2,6 +2,9 @@ package tup;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class BranchAndBound {
     private Problem problem;
@@ -10,6 +13,7 @@ public class BranchAndBound {
     private int[] numberOfUniqueVenuesVisited;
     private boolean[][] visited;
     private LowerBound lowerBound;
+    private int nNodes = 0;
 
     public BranchAndBound(Problem problem) {
         this.problem = problem;
@@ -25,10 +29,15 @@ public class BranchAndBound {
             }
         }
 
-        long StartTime = System.currentTimeMillis();
-        lowerBound = new LowerBound(problem);
-        lowerBound.solve();
-        System.out.println("Lower bound calculation time: " + (System.currentTimeMillis() - StartTime) + "ms");
+        // Start lower bound calculation in a separate thread
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            long StartTime = System.currentTimeMillis();
+            lowerBound = new LowerBound(problem);
+            lowerBound.solve();
+            System.out.println("Lower bound calculation time: " + (System.currentTimeMillis() - StartTime) / 1000.0 + "s");
+        });
+        executor.shutdown();
     }
 
     public void solve() {
@@ -46,12 +55,14 @@ public class BranchAndBound {
 
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
         this.branchAndBound(path, 0, 1, 0);
+        this.lowerBound.shutdown = true;
         System.out.println("Best solution: ");
         printPath(bestSolution);
         System.out.println("Distance: " + bestDistance);
+        System.out.println("Number of nodes: " + nNodes);
     }
 
-    private int[][] branchAndBound(int[][] path, int umpire, int round, int currentCost) {
+    private void branchAndBound(int[][] path, int umpire, int round, int currentCost) {
         if (round == this.problem.nRounds ) {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
@@ -64,7 +75,7 @@ public class BranchAndBound {
                     System.arraycopy(path[_umpire], 0, bestSolution[_umpire], 0, this.problem.nRounds);
                 }
             }
-            return path;
+            return;
         }
 
         List<Integer> feasibleAllocations = problem.getValidAllocations(path, umpire, round);
@@ -80,6 +91,7 @@ public class BranchAndBound {
                 int prevHomeTeam = path[umpire][round - 1];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
                 if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round && currentCost + extraCost + lowerBound.getLowerBound(round) < bestDistance) {
+                    nNodes++;
                     if (umpire == this.problem.nUmpires - 1) {
                         this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
                     }
@@ -94,7 +106,6 @@ public class BranchAndBound {
                 }
             }
         }
-        return path;
     }
 
     private void printPath(int[][] path) {

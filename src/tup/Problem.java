@@ -63,9 +63,9 @@ public class Problem {
 
     public List<Integer> getValidAllocations(int[][] assignments, int umpire, int round) {
         // feasibleAllocations contains all feasible home teams (NO INDEXES)
-        List<Integer> feasibleAllocations = new ArrayList<>();
-        List<Integer> previousLocations = getPreviousLocations(assignments, round, umpire);
-        List<Integer> previousTeams = getPreviousTeams(assignments, round, umpire);
+        ArrayList<Integer> feasibleAllocations = new ArrayList<>();
+        ArrayList<Integer> previousLocations = getPreviousLocations(assignments, round, umpire);
+        ArrayList<Integer> previousTeams = getPreviousTeams(assignments, round, umpire);
         for (int i = 0; i < this.nTeams; i++) {
             if (this.opponents[round][i] < 0 ) {
                 int homeTeam = -this.opponents[round][i];
@@ -95,8 +95,8 @@ public class Problem {
         return feasibleAllocations;
     }
 
-    public List<Integer> getPreviousLocations(int [][] assignments, int round, int umpire) {
-        List<Integer> previousLocations = new ArrayList<>();
+    public ArrayList<Integer> getPreviousLocations(int [][] assignments, int round, int umpire) {
+        ArrayList<Integer> previousLocations = new ArrayList<>();
         for (int i = 1; i < this.q1 && round - i >= 0; i++) {
             int homeTeam = assignments[umpire][round - i];
             previousLocations.add(homeTeam);
@@ -104,8 +104,8 @@ public class Problem {
         return previousLocations;
     }
 
-    private List<Integer> getPreviousTeams(int [][] assignments, int round, int umpire) {
-        List<Integer> previousTeams = new ArrayList<>();
+    private ArrayList<Integer> getPreviousTeams(int [][] assignments, int round, int umpire) {
+        ArrayList<Integer> previousTeams = new ArrayList<>();
         for (int i = 1; i < this.q2 && round - i >= 0; i++) {
             int homeTeam = assignments[umpire][round - i];
             int awayTeam = this.opponents[round - i][homeTeam - 1];
