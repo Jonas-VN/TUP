@@ -134,11 +134,11 @@ public class LowerBound {
                     }
                     if (S[r3 - 1][r + k - 1] == 0) {
                         BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k);
-                        S[r3 - 1][r + k - 1] = bbsub.solve();//hier zit de fout
+                        S[r3 - 1][r + k - 1] = bbsub.solve();
                     }
 
                     for (int r1 = r3; r1 >= 1; r1--) {
-                        for (int r2 = r + k; r2 < problem.nRounds; r2++) {
+                        for (int r2 = r + k; r2 < problem.nRounds+1; r2++) {
                             LB[r1 - 1][r2 - 1] = Math.max(LB[r1 - 1][r2 - 1], LB[r1 - 1][r3 - 1] + S[r3 - 1][r + k - 1] + LB[r + k - 1][r2 - 1]);
                         }
                     }
@@ -154,7 +154,6 @@ public class LowerBound {
 //        printArray(LB);// hier zie je dat LB nog steeds hetzelfde is als marker 1 dus er klopt iets niet, wss omdat S niet aangepast wordt
 //        System.out.println("S matrix");
 //        printArray(S);
-        bestDistance= LB[0][problem.nRounds - 1];
 
 
     }
