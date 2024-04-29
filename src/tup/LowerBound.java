@@ -2,20 +2,28 @@ package tup;
 
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 public class LowerBound {
     private Problem problem;
     private final int nrOfMatches;//aantal matches per ronde
     private double[][] LB; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
     public boolean shutdown = false;
+    private Semaphore[] mutexes;
 
     public LowerBound(Problem problem) {
         this.problem = problem;
         this.nrOfMatches= problem.nTeams / 2;
         this.LB = new double[problem.nRounds][problem.nRounds];
+        this.mutexes = new Semaphore[problem.nRounds];
+        for (int i = 0; i < problem.nRounds; i++) {
+            mutexes[i] = new Semaphore(1);
+        }
     }
 
-    public void solve(){
+    public void solve() throws InterruptedException {
         int[][] umpireAssignments = new int[problem.nUmpires][]; // rows = umpires and columns = array of assigned team per round
         //int[][] umpireAssignmentsHome = new int[nrOfUmpires][]; // rows = umpires and columns = array of assigned team per round
         //int[][] umpireAssignmentsAway = new int[nrOfUmpires][]; // rows = umpires and columns = array of assigned team per round
@@ -105,7 +113,7 @@ public class LowerBound {
             }
 
             LBI[fromRound][toRound] = totalDistance;
-           // System.out.println("Round " + fromRound + " to " + toRound + " has Mindistance " + totalDistance);
+            // System.out.println("Round " + fromRound + " to " + toRound + " has Mindistance " + totalDistance);
             //na de laatste iteratie heb je van alle rondes de min afstand tussen 2 rondes door hungarian
             //de hungarian houdt nog geen rekening met q-constraints enkel tussen 2 wedstrijden op zich
         }
@@ -121,12 +129,17 @@ public class LowerBound {
 
             for (int r2 = r + 1; r2 <= problem.nRounds; r2++) {
                 r2_ix = r2 - 1;
+                mutexes[r_ix].acquire();
                 LB[r_ix][r2_ix] = S[r_ix][r_ix + 1] + LB[r_ix + 1][r2_ix];
+                mutexes[r_ix].release();
             }
         }
+        Set<String> cache = new HashSet<>();
+
         //printArray(LB);//marker 1 voor LB "zie onder"
-        for (int k = 2; k <= problem.nRounds - 1; k++) {
+        for (int k = 3; k <= problem.nRounds - 1; k++) {
             int r = problem.nRounds - k;
+            int end = r+k;
 
             while (r >= 1) {
                 for (int r3 = r + k - 2; r3 >= r; r3--) {
@@ -135,6 +148,10 @@ public class LowerBound {
                     if (S[r3 - 1][r + k - 1] > 0) {
                         continue; // do not resolve already solved subproblems
                     }
+//                    if (cache.contains(r + "-" + end))
+//                        continue;
+//
+//                    cache.add(r + "-" + end);
                     if (S[r3 - 1][r + k - 1] == 0) {
                         BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k, this);
                         S[r3 - 1][r + k - 1] = bbsub.solve();
@@ -142,7 +159,11 @@ public class LowerBound {
 
                     for (int r1 = r3; r1 >= 1; r1--) {
                         for (int r2 = r + k; r2 < problem.nRounds+1; r2++) {
+                            mutexes[r1 - 1].acquire();
+                            mutexes[r + k - 1].acquire();
                             LB[r1 - 1][r2 - 1] = Math.max(LB[r1 - 1][r2 - 1], LB[r1 - 1][r3 - 1] + S[r3 - 1][r + k - 1] + LB[r + k - 1][r2 - 1]);
+                            mutexes[r1 - 1].release();
+                            mutexes[r + k - 1].release();
                         }
                     }
                 }
@@ -150,6 +171,7 @@ public class LowerBound {
                 r = r - k;
             }
         }
+        return;
     }
 
     void getMatchesOfRound(int[] r, int[] h, int[] a) {
@@ -181,11 +203,17 @@ public class LowerBound {
 
     }
 
-    public double getLowerBound(int round) {
-        return LB[round][problem.nRounds - 1];
+    public double getLowerBound(int round) throws InterruptedException {
+        mutexes[round].acquire();
+        double ret =  LB[round][problem.nRounds - 1];
+        mutexes[round].release();
+        return ret;
     }
 
     public double getLowerBound(int fromRound, int toRound) {
-        return LB[fromRound - 1][toRound - 1];
+        mutexes[fromRound - 1].acquireUninterruptibly();
+        double ret = LB[fromRound - 1][toRound - 1];
+        mutexes[fromRound - 1].release();
+        return ret;
     }
 }

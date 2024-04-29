@@ -13,9 +13,9 @@ public class BranchAndBound {
     private int[] numberOfUniqueVenuesVisited;
     private boolean[][] visited;
     private LowerBound lowerBound;
-    private int nNodes = 0;
+    private long nNodes = 0;
 
-    public BranchAndBound(Problem problem) {
+    public BranchAndBound(Problem problem) throws InterruptedException {
         this.problem = problem;
         bestSolution = new int[problem.nUmpires][problem.nRounds];
         numberOfUniqueVenuesVisited = new int[problem.nUmpires];
@@ -30,17 +30,21 @@ public class BranchAndBound {
         }
 
         // Start lower bound calculation in a separate thread
+        lowerBound = new LowerBound(problem);
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             long StartTime = System.currentTimeMillis();
-            lowerBound = new LowerBound(problem);
-            lowerBound.solve();
+            try {
+                lowerBound.solve();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             System.out.println("Lower bound calculation time: " + (System.currentTimeMillis() - StartTime) / 1000.0 + "s");
         });
         executor.shutdown();
     }
 
-    public void solve() {
+    public void solve() throws InterruptedException {
         int[][] path = new int[problem.nUmpires][problem.nRounds];
 
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
@@ -62,13 +66,13 @@ public class BranchAndBound {
         System.out.println("Number of nodes: " + nNodes);
     }
 
-    private void branchAndBound(int[][] path, int umpire, int round, int currentCost) {
+    private void branchAndBound(int[][] path, int umpire, int round, int currentCost) throws InterruptedException {
         if (round == this.problem.nRounds ) {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
                 // The constructed path is better than the current best path! :)
-                System.out.println("New BEST solution found with cost " + currentCost + "! :)");
-                printPath(path);
+                //System.out.println("New BEST solution found with cost " + currentCost + "! :)");
+                //printPath(path);
                 // Copy solution
                 bestDistance = currentCost;
                 for (int _umpire = 0; _umpire < this.problem.nUmpires; _umpire++) {

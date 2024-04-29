@@ -29,7 +29,7 @@ public class BranchAndBoundSub {
                 path[umpire++][0] = -problem.opponents[this.firstRound-1][team];
             }
         }
-
+        //System.out.println("Starting branch and bound from round " + firstRound + " to " + lastRound);
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
         this.branchAndBound(path, 0, firstRound,0);
         return bestDistance;
