@@ -2,14 +2,13 @@ package tup;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class BranchAndBound {
     private Problem problem;
     private int bestDistance = Integer.MAX_VALUE;
-    private int[][] bestSolution;
+    public int[][] bestSolution;
     private int[] numberOfUniqueVenuesVisited;
     private boolean[][] visited;
     private LowerBound lowerBound;
@@ -67,11 +66,11 @@ public class BranchAndBound {
     }
 
     private void branchAndBound(int[][] path, int umpire, int round, int currentCost) throws InterruptedException {
-        if (round == this.problem.nRounds ) {
+        if (round == this.problem.nRounds) {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
                 // The constructed path is better than the current best path! :)
-                //System.out.println("New BEST solution found with cost " + currentCost + "! :)");
+                System.out.println("New BEST solution found with cost " + currentCost + "! :)");
                 //printPath(path);
                 // Copy solution
                 bestDistance = currentCost;

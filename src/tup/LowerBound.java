@@ -134,9 +134,7 @@ public class LowerBound {
                 mutexes[r_ix].release();
             }
         }
-        Set<String> cache = new HashSet<>();
 
-        //printArray(LB);//marker 1 voor LB "zie onder"
         for (int k = 3; k <= problem.nRounds - 1; k++) {
             int r = problem.nRounds - k;
             int end = r+k;
@@ -148,10 +146,6 @@ public class LowerBound {
                     if (S[r3 - 1][r + k - 1] > 0) {
                         continue; // do not resolve already solved subproblems
                     }
-//                    if (cache.contains(r + "-" + end))
-//                        continue;
-//
-//                    cache.add(r + "-" + end);
                     if (S[r3 - 1][r + k - 1] == 0) {
                         BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k, this);
                         S[r3 - 1][r + k - 1] = bbsub.solve();
