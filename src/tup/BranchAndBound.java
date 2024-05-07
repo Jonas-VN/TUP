@@ -13,6 +13,7 @@ public class BranchAndBound {
     private boolean[][] visited;
     private LowerBound lowerBound;
     private long nNodes = 0;
+    private long startTime = System.currentTimeMillis();
 
     public BranchAndBound(Problem problem) throws InterruptedException {
         this.problem = problem;
@@ -44,6 +45,7 @@ public class BranchAndBound {
     }
 
     public void solve() throws InterruptedException {
+        startTime = System.currentTimeMillis();
         int[][] path = new int[problem.nUmpires][problem.nRounds];
 
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
@@ -63,6 +65,7 @@ public class BranchAndBound {
         printPath(bestSolution);
         System.out.println("Distance: " + bestDistance);
         System.out.println("Number of nodes: " + nNodes);
+        System.out.println("Time: " + (System.currentTimeMillis() - startTime) / 60_000.0 + "min");
     }
 
     private void branchAndBound(int[][] path, int umpire, int round, int currentCost) throws InterruptedException {
@@ -70,7 +73,7 @@ public class BranchAndBound {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
                 // The constructed path is better than the current best path! :)
-                System.out.println("New BEST solution found with cost " + currentCost + "! :)");
+                System.out.println("New BEST solution found in " + (System.currentTimeMillis() - startTime) / 60_000.0 + " min with cost " + currentCost + "! :)");
                 //printPath(path);
                 // Copy solution
                 bestDistance = currentCost;
