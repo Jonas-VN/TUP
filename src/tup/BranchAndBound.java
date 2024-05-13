@@ -13,6 +13,7 @@ public class BranchAndBound {
     private LowerBound lowerBound;
     private long nNodes = 0;
     private long startTime = System.currentTimeMillis();
+    private int m = 0;
 
     public BranchAndBound(Problem problem) throws InterruptedException {
         this.problem = problem;
@@ -64,7 +65,7 @@ public class BranchAndBound {
         printPath(bestSolution);
         System.out.println("Distance: " + bestDistance);
         System.out.println("Number of nodes: " + nNodes);
-        System.out.println("Time: " + (System.currentTimeMillis() - startTime) / 60_000.0 + "min");
+        System.out.println("Time: " + (System.currentTimeMillis() - startTime) / 1_000.0 + "s");
     }
 
     private void branchAndBound(int[][] path, int umpire, int round, int currentCost) throws InterruptedException {
@@ -72,7 +73,7 @@ public class BranchAndBound {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
                 // The constructed path is better than the current best path! :)
-                //System.out.println("New BEST solution found in " + (System.currentTimeMillis() - startTime) / 60_000.0 + " min with cost " + currentCost + "! :)");
+                System.out.println("New BEST solution found in " + (System.currentTimeMillis() - startTime) / 60_000.0 + " min with cost " + currentCost + "! :)");
                 //printPath(path);
                 // Copy solution
                 bestDistance = currentCost;
@@ -149,7 +150,7 @@ public class BranchAndBound {
         if (visitedTeams.isEmpty()) {
             return null;
         }
-        for (int i = visitedTeams.size()+1; i < problem.nUmpires; i++) {
+        for (int i = visitedTeams.size(); i < problem.nUmpires; i++) {
            previousTeams.add(assignments[i][round-1]);
 
         }
@@ -178,8 +179,6 @@ public class BranchAndBound {
             }
         }
 
-
-
         return subgraph;
     }
     private boolean canPrune(int[][] path, int umpire, int round, int allocation, int currentCost) throws InterruptedException {
@@ -191,20 +190,21 @@ public class BranchAndBound {
 //        }
         if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] >= problem.nRounds - round) return true;
 
-
-        if (currentCost + lowerBound.getLowerBound(round) >= bestDistance) {
+        double lb = this.lowerBound.getLowerBound(round);
+        if (currentCost + lb >= bestDistance) {
             //System.out.println("Pruned op LB");
             return true;
         }
 
-//        int[][] subgraph = generateSubgraph(path, round, allocation);
-//        if (subgraph != null) {
-//            int m = solveMatchingProblem(subgraph);
-//            if (currentCost + lowerBound.getLowerBound(round) + m >= bestDistance) {
-//                System.out.println("Pruned op matching");
-//                return true;
-//            }
-//        }
+        int[][] subgraph = generateSubgraph(path, round, allocation);
+        if (subgraph != null && currentCost + lb + lowerBound.getLowerBound(round, round+1) >= bestDistance) {
+            m = solveMatchingProblem(subgraph);
+            //System.out.println("Matching cost: " + m);
+            if (currentCost + lowerBound.getLowerBound(round) + m >= bestDistance) {
+                //System.out.println("Pruned op matching");
+                return true;
+            }
+        }
 
 
 
