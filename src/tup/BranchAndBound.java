@@ -101,7 +101,8 @@ public class BranchAndBound {
 
                 int prevHomeTeam = path[umpire][round - 1];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
-                if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round && currentCost + extraCost + lowerBound.getLowerBound(round) < bestDistance) {
+                //if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round && currentCost + extraCost + lowerBound.getLowerBound(round) < bestDistance) {
+                if (!canPrune(path, umpire, round, allocation, currentCost + extraCost)) {
                     nNodes++;
                     if (umpire == this.problem.nUmpires - 1) {
                         this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
@@ -183,22 +184,27 @@ public class BranchAndBound {
     }
     private boolean canPrune(int[][] path, int umpire, int round, int allocation, int currentCost) throws InterruptedException {
         // Controleer of het team al is toegewezen in deze ronde
-        for (int i = 0; i < umpire; i++) {
-            if (path[i][round] == allocation) {
-                return true;
-            }
-        }
+//        for (int i = 0; i < umpire; i++) {
+//            if (path[i][round] == allocation) {
+//                return true;
+//            }
+//        }
+        if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] >= problem.nRounds - round) return true;
+
+
         if (currentCost + lowerBound.getLowerBound(round) >= bestDistance) {
+            //System.out.println("Pruned op LB");
             return true;
         }
 
-        int[][] subgraph = generateSubgraph(path, round, allocation);
-        if (subgraph != null) {
-            int m = solveMatchingProblem(subgraph);
-            if (currentCost + lowerBound.getLowerBound(round) + m >= bestDistance) {
-                return true;
-            }
-        }
+//        int[][] subgraph = generateSubgraph(path, round, allocation);
+//        if (subgraph != null) {
+//            int m = solveMatchingProblem(subgraph);
+//            if (currentCost + lowerBound.getLowerBound(round) + m >= bestDistance) {
+//                System.out.println("Pruned op matching");
+//                return true;
+//            }
+//        }
 
 
 
