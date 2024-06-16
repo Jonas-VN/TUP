@@ -11,7 +11,7 @@ public class Main {
     public static void main(String[] args) throws FileNotFoundException, InterruptedException {
         String instance = "umps14";
         int q1 = 7;
-        int q2 = 2;
+        int q2 = 3;
 
         var redirectConsoleToFile = false;
 
@@ -34,6 +34,7 @@ public class Main {
         problem.enableCaching = true;
         problem.enableLowerBoundPartialMatching = true;
         problem.enableLowerBoundCaching = true;
+        problem.enableMultiThreading = false;
 
  //       problem.printTournement();
 
