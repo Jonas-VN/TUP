@@ -13,6 +13,21 @@ public class Problem {
     public final int[][] dist;
     public final int[][] opponents;
 
+    public final int maxValue = 100000;
+
+    /*
+    to keep track of the gamenr an opponent is in per round
+     */
+    public final int[][] opponentsGames;
+
+    public final PartialMatching partialMatching;
+
+    public Boolean enablePartialMatching = false;
+    public Boolean enableCaching = false;
+
+    public Boolean enableLowerBoundPartialMatching = false;
+    public Boolean enableLowerBoundCaching = false;
+
     public Problem(int nTeams, int[][] dist, int[][] opponents, int q1, int q2) {
         this.nTeams = nTeams;
         this.nUmpires = nTeams / 2;
@@ -21,6 +36,21 @@ public class Problem {
         this.opponents = opponents;
         this.q1 = q1;
         this.q2 = q2;
+
+        this.opponentsGames = new int[nRounds][nTeams];
+        this.partialMatching = new PartialMatching(this);
+
+        for (int round = 0; round < nRounds; round++) {
+            int gameNrInRound = 1;
+            for (int team = 0; team < nTeams; team++) {
+                if (opponents[round][team] < 0){
+                    opponentsGames[round][team] = gameNrInRound;
+                    opponentsGames[round][-opponents[round][team] - 1] = gameNrInRound;
+                    gameNrInRound++;
+                }
+            }
+        }
+
     }
 
     @Override
@@ -116,5 +146,40 @@ public class Problem {
     }
 
 
+    public void printArray(int[][] array){
+        int rows = array.length; // Get the number of rows
+        int cols = array[0].length; // Get the number of columns
+
+        System.out.println();
+
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                System.out.printf("%d ", array[i][j]); // Print each element followed by a space
+            }
+            System.out.println();
+        }
+
+        System.out.println();
+        System.out.println();
+    }
+
+    public void printTournement(){
+        System.out.println();
+        for (int round = 0; round < this.nRounds; round++) {
+            System.out.printf("Round%02d:\t\t", (round+1));
+            for (int game = 0; game < this.nTeams; game++) {
+                if (opponents[round][game] < 0) {
+                    int homeTeam = -opponents[round][game];
+                    int awayTeam = game+1;
+
+                    System.out.print(homeTeam + "-" + awayTeam + "\t\t");
+                }
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
 }
 

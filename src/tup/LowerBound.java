@@ -9,29 +9,28 @@ import java.util.concurrent.Semaphore;
 public class LowerBound {
     private Problem problem;
     private final int nrOfMatches;//aantal matches per ronde
-    private double[][] LB; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
+    private int[][] LB; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
     public boolean shutdown = false;
     private Semaphore[] mutexes;
 
     public LowerBound(Problem problem) {
         this.problem = problem;
         this.nrOfMatches= problem.nTeams / 2;
-        this.LB = new double[problem.nRounds][problem.nRounds];
+        this.LB = new int[problem.nRounds][problem.nRounds];
         this.mutexes = new Semaphore[problem.nRounds];
         for (int i = 0; i < problem.nRounds; i++) {
             mutexes[i] = new Semaphore(1);
         }
+
+        initializeLowerBound();
     }
 
-    public void solve() throws InterruptedException {
+    private void initializeLowerBound(){
         int[][] umpireAssignments = new int[problem.nUmpires][]; // rows = umpires and columns = array of assigned team per round
-        //int[][] umpireAssignmentsHome = new int[nrOfUmpires][]; // rows = umpires and columns = array of assigned team per round
-        //int[][] umpireAssignmentsAway = new int[nrOfUmpires][]; // rows = umpires and columns = array of assigned team per round
+
         // initialize to zeros
         for (int i = 0; i < problem.nUmpires; i++)
         {
-            //umpireAssignmentsHome[i] = new int[nRounds];
-            //umpireAssignmentsAway[i] = new int[nRounds];
             umpireAssignments[i] = new int[problem.nRounds];
         }
         // We start with assigning umpire 1 to game 1 = the first round
@@ -40,13 +39,12 @@ public class LowerBound {
         getMatchesOfRound(problem.opponents[0], home, away);
 
         for (int i = 0; i < home.length; i++) {
-            // umpireAssignmentsHome[i][0] = home[i];
-            // umpireAssignmentsAway[i][0] = away[i];
             umpireAssignments[i][0] = home[i];
         }
 
         int[][] d = new int[problem.nTeams][];
-        int[][] LBI = new int[problem.nRounds][problem.nRounds];
+        // Use LB from the start
+        //int[][] LBI = new int[problem.nRounds][problem.nRounds];
 
         for (int i = 0; i < problem.nRounds - 1; i++) {
             int fromRound = i;
@@ -57,7 +55,8 @@ public class LowerBound {
             // .MAX_VALUE and replace the feasible distances
             for (int j = 0; j < problem.nTeams; j++) {
                 d[j] = new int[problem.nTeams];
-                Arrays.fill(d[j], 10000);
+                Arrays.fill(d[j], problem.maxValue); // TODO Waarom 10000 -> zeker dat dit genoeg is
+                //Arrays.fill(d[j], Integer.MAX_VALUE);
             }
 
             int[] round1 = problem.opponents[i];
@@ -73,7 +72,11 @@ public class LowerBound {
             for (int j = 0; j < nrOfMatches; j++) {
                 for (int k = 0; k < nrOfMatches; k++) {
                     // going to the same teams (or venue = home team)
-                    if (home1[j] == home2[k] || home1[j] == away2[k] || away1[j] == home2[k] || away1[j] == away2[k]) {
+                    if (problem.q2 > 1 && (home1[j] == home2[k] || home1[j] == away2[k] || away1[j] == home2[k] || away1[j] == away2[k])) {
+                        continue;
+                    }
+
+                    if (problem.q1 > 1 && home1[j] == home2[k]) {
                         continue;
                     }
 
@@ -86,7 +89,7 @@ public class LowerBound {
 
             //Hungarian hungarian = new Hungarian(d);
             Hungarian hungarian = new Hungarian();
-            Hungarian.assignmentProblem(d);
+            hungarian.assignmentProblem(d); // Gil -> hier werd Hungarian.assignmentProblem gebruikt en dus de niet de instance. static issue!!
             int [] solution = hungarian.xy;
 
             // Meaning of solution: -> 1,5,2,4,6,3,0,7 for the first to second round
@@ -112,20 +115,23 @@ public class LowerBound {
                 umpireAssignments[umpIx][toRound] = to + 1; // +1 because this contains not idx but teamNr
             }
 
-            LBI[fromRound][toRound] = totalDistance;
+            LB[fromRound][toRound] = totalDistance;
             // System.out.println("Round " + fromRound + " to " + toRound + " has Mindistance " + totalDistance);
             //na de laatste iteratie heb je van alle rondes de min afstand tussen 2 rondes door hungarian
             //de hungarian houdt nog geen rekening met q-constraints enkel tussen 2 wedstrijden op zich
         }
+    }
+
+    public void solve() throws InterruptedException {
 
         // now we try to strengthen the bounds using Algorithm 2
-        double[][] S = new double[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the solutions for the subproblems
+        int[][] S = new int[problem.nRounds][problem.nRounds]; // square matrix auto initialized with 0's -> contains the solutions for the subproblems
 
 
         int r_ix, r2_ix;
         for (int r = problem.nRounds - 1; r >= 1; r--) {
             r_ix = r - 1;
-            S[r_ix][r_ix + 1] = LBI[r_ix][r_ix + 1];
+            S[r_ix][r_ix + 1] = LB[r_ix][r_ix + 1];
 
             for (int r2 = r + 1; r2 <= problem.nRounds; r2++) {
                 r2_ix = r2 - 1;
@@ -135,37 +141,88 @@ public class LowerBound {
             }
         }
 
-        for (int k = 3; k <= problem.nRounds - 1; k++) {
-            int r = problem.nRounds - k;
-            int end = r+k;
+        // originele implementatie maar gefoefel met index en/of rondenrs
+//        for (int k = 3; k <= problem.nRounds - 1; k++) {
+//            int r = problem.nRounds - k;
+//            int end = r+k;
+//
+//            while (r >= 1) {
+//                for (int r3 = r + k - 2; r3 >= r; r3--) {
+//                    if (shutdown) return;
+//                    System.out.println(String.format("Bnb Sub from roundnr %d to roundnr %d", r3, r+k));
+//                    if (S[r3 - 1][r + k - 1] > 0) {
+//                        continue; // do not resolve already solved subproblems
+//                    }
+//                    if (S[r3 - 1][r + k - 1] == 0) {
+//                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k, this);
+//                        S[r3 - 1][r + k - 1] = bbsub.solve();
+//                    }
+//
+//                    for (int r1 = r3; r1 >= 1; r1--) {
+//                        for (int r2 = r + k; r2 < problem.nRounds+1; r2++) {
+//                            mutexes[r1 - 1].acquire();
+//                            mutexes[r + k - 1].acquire();
+//                            LB[r1 - 1][r2 - 1] = Math.max(LB[r1 - 1][r2 - 1], LB[r1 - 1][r3 - 1] + S[r3 - 1][r + k - 1] + LB[r + k - 1][r2 - 1]);
+//                            mutexes[r1 - 1].release();
+//                            mutexes[r + k - 1].release();
+//                        }
+//                    }
+//                }
+//
+//                r = r - k;
+//            }
+//        }
 
-            while (r >= 1) {
-                for (int r3 = r + k - 2; r3 >= r; r3--) {
+
+        for (int k = 2; k < problem.nRounds; k++) {
+            //System.out.println(String.format("k = %d", k));
+
+            int start = problem.nRounds - 1 - k; //ix
+            int end = start + k; //ix
+
+            while (start >= 0) {
+                for (int first = end - 2; first >= start; first--) {
                     if (shutdown) return;
 
-                    if (S[r3 - 1][r + k - 1] > 0) {
+                    //System.out.println(String.format("Bnb Sub from round %d to round %d", first, end));
+
+                    if (S[first][end] > 0) {
                         continue; // do not resolve already solved subproblems
                     }
-                    if (S[r3 - 1][r + k - 1] == 0) {
-                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k, this);
-                        S[r3 - 1][r + k - 1] = bbsub.solve();
-                    }
 
-                    for (int r1 = r3; r1 >= 1; r1--) {
-                        for (int r2 = r + k; r2 < problem.nRounds+1; r2++) {
-                            mutexes[r1 - 1].acquire();
-                            mutexes[r + k - 1].acquire();
-                            LB[r1 - 1][r2 - 1] = Math.max(LB[r1 - 1][r2 - 1], LB[r1 - 1][r3 - 1] + S[r3 - 1][r + k - 1] + LB[r + k - 1][r2 - 1]);
-                            mutexes[r1 - 1].release();
-                            mutexes[r + k - 1].release();
+                    if (S[first][end] == 0) {
+                        // bbSub needs roundnr's and not ix's => +1
+                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, first + 1 , end + 1, this);
+                        var m = bbsub.solve();
+                        S[first][end] = m; // S is also our cache to skip already resolved subproblems
+
+                        int delta = m - getLowerBound2(first, end);
+
+                        // only update LB if we get stronger lower bounds (delta < 0 should never occur because we are making the bounds stronger)
+                        if (delta > 0){
+                            //S[first][end] = m;
+
+                            //propagate to round 0
+                            for (int i = first; i >= 0; i--) {
+                                for (int j = end; j < problem.nRounds; j++) {
+                                    mutexes[i].acquire();
+                                    mutexes[end].acquire();
+                                    LB[i][j] = Math.max(LB[i][j], LB[i][first] + S[first][end] + LB[end][j]);
+                                    mutexes[i].release();
+                                    mutexes[end].release();
+                                }
+                            }
                         }
                     }
                 }
 
-                r = r - k;
+
+                //if (start == 0) break; // overbodig want als start 0 is en je doet -k dan zal de while loop stoppen vermits start >= 0 moet zijn
+                end = start; // dit was vergeten waardoor er vééééél meer berekeningen worden uitgevoerd
+                start -= k;
             }
         }
-        return;
+        //printLowerBounds();
     }
 
     void getMatchesOfRound(int[] r, int[] h, int[] a) {
@@ -197,17 +254,62 @@ public class LowerBound {
 
     }
 
-    public double getLowerBound(int round) throws InterruptedException {
+    /**
+     *
+     * @param round index of the round to start from
+     * @return
+     * @throws InterruptedException
+     */
+    public int getLowerBound(int round) throws InterruptedException {
         mutexes[round].acquire();
-        double ret =  LB[round][problem.nRounds - 1];
+        int ret =  LB[round][problem.nRounds - 1];
         mutexes[round].release();
         return ret;
     }
 
-    public double getLowerBound(int fromRound, int toRound) {
+    /**
+     *
+     * @param fromRound nr of the round to start from (not the index)
+     * @param toRound nr of the round to end (not the index)
+     * @return
+     */
+    public int getLowerBound(int fromRound, int toRound) {
         mutexes[fromRound - 1].acquireUninterruptibly();
-        double ret = LB[fromRound - 1][toRound - 1];
+        int ret = LB[fromRound - 1][toRound - 1];
         mutexes[fromRound - 1].release();
         return ret;
     }
+
+    /**
+     *
+     * @param fromRound index of the round to start from
+     * @param toRound index of the round to end
+     * @return
+     */
+    public int getLowerBound2(int fromRound, int toRound) {
+        mutexes[fromRound].acquireUninterruptibly();
+        int ret = LB[fromRound][toRound];
+        mutexes[fromRound].release();
+        return ret;
+    }
+
+    public void printLowerBounds(){
+        int rows = LB.length; // Get the number of rows
+        int cols = LB[0].length; // Get the number of columns
+
+        System.out.println();
+
+        for (int i = 0; i < rows; i++)
+        {
+            for (int j = 0; j < cols; j++)
+            {
+                System.out.printf("%08d ", LB[i][j]); // Print each element followed by a space
+            }
+            System.out.println();
+        }
+
+        System.out.println();
+        System.out.println();
+    }
+
 }

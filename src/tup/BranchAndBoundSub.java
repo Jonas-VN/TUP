@@ -11,7 +11,13 @@ public class BranchAndBoundSub {
     private int[][] bestSolution;
     private LowerBound lowerbound;
 
-
+    /**
+     * Branch and bound on a subproblem
+     * @param problem
+     * @param firstRound roundnr of the first round (not ix)
+     * @param lastRound roundnr of the last round (not ix)
+     * @param lowerbound lower bound instance
+     */
     public BranchAndBoundSub(Problem problem, int firstRound, int lastRound, LowerBound lowerbound) {
         this.problem = problem;
         this.firstRound = firstRound;
@@ -20,7 +26,7 @@ public class BranchAndBoundSub {
         this.lowerbound = lowerbound;
     }
 
-    public int solve() {
+    public int solve() throws InterruptedException {
         int[][] path = new int[problem.nUmpires][lastRound-firstRound+1];
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
         int umpire = 0;
@@ -35,7 +41,15 @@ public class BranchAndBoundSub {
         return bestDistance;
     }
 
-    private void branchAndBound(int[][] path, int umpire, int round, int currentCost) {
+    /**
+     *
+     * @param path
+     * @param umpire
+     * @param round nr of the round not the index and it is the round we assigning umpires to -> it is if you consider it and ix
+     * @param currentCost
+     * @throws InterruptedException
+     */
+    private void branchAndBound(int[][] path, int umpire, int round, int currentCost) throws InterruptedException {
         if (lowerbound.shutdown) return;
         if (round == lastRound ) {
             // Constructed a full feasible path
@@ -55,7 +69,8 @@ public class BranchAndBoundSub {
 
                 int prevHomeTeam = path[umpire][round-firstRound+1 - 1];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
-                if (currentCost + extraCost + lowerbound.getLowerBound(round + 1, lastRound) < bestDistance) {
+
+                if (!canPrune(path, round, umpire,currentCost + extraCost)) {
                     if (umpire == this.problem.nUmpires - 1) {
                         this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
                     }
@@ -67,6 +82,46 @@ public class BranchAndBoundSub {
 
             }
         }
+    }
+
+    /**
+     *
+     * @param path
+     * @param round the roundnr (not the index) of the round we are assigning umpire to
+     * @param currentCost
+     * @return
+     * @throws InterruptedException
+     */
+    private boolean canPrune(int[][] path, int round, int umpire ,int currentCost) throws InterruptedException {
+
+        int lb = this.lowerbound.getLowerBound(round+1, lastRound); // deze overload vraagt geen indexen maar effectieve nummers
+        //var currentRoundIx = round - 1;
+        //int lb = this.lowerbound.getLowerBound(currentRoundIx + 1+1, lastRound-1+1); // minimum cost vanaf hier tot de laatste ronde
+        if (currentCost + lb >= bestDistance) {
+            //System.out.println("Pruned op LB");
+            return true;
+        }
+
+        // Partial matching
+        if (problem.enableLowerBoundPartialMatching && umpire < problem.nUmpires - 1){
+
+            // Create the new 2D array because Partial matching needs all the rounds
+            int[][] fullPath = new int[this.problem.nUmpires][this.problem.nRounds];
+            // Copy elements from the original array to the new array starting at a certain index
+            int startIdx = firstRound - 1;
+            for (int i = 0; i < path.length; i++) {
+                // Copy each sub-array to the new sub-array
+                System.arraycopy(path[i], 0, fullPath[i], startIdx, path[i].length);
+            }
+
+            var m = this.problem.partialMatching.calculateDistance(fullPath, round, problem.enableLowerBoundCaching); // partial matching needs the index of round we are assigning umpire to!
+            //System.out.println("Matching cost: " + m);
+            if (m >= problem.maxValue || currentCost + lb + m >= bestDistance) {
+                //System.out.println("Pruned op matching");
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<Integer> getValidAllocations(int[][] assignments, int umpire, int round) {

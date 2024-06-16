@@ -1,18 +1,18 @@
 package tup;// Java Equivalent:
 import java.util.*;
 public class Hungarian {
-    public static int n;
-    public static int cost[][]; //cost matrix
-    public static int max_match; //n workers and n jobs
-    public static int lx[], ly[]; //labels of X and Y parts
-    public static int xy[]; //xy[x] - vertex that is matched with x,
-    public static int yx[]; //yx[y] - vertex that is matched with y
-    public static boolean S[], T[]; //sets S and T in algorithm
-    public static int slack[]; //as in the algorithm description
-    public static int slackx[]; //slackx[y] such a vertex, that
-    public static int previous[]; //array for memorizing alternating p
+    public /*static*/ int n;
+    public /*static*/ int cost[][]; //cost matrix
+    public /*static*/ int max_match; //n workers and n jobs
+    public /*static*/ int lx[], ly[]; //labels of X and Y parts
+    public /*static*/ int xy[]; //xy[x] - vertex that is matched with x,
+    public /*static*/ int yx[]; //yx[y] - vertex that is matched with y
+    public /*static*/ boolean S[], T[]; //sets S and T in algorithm
+    public /*static*/ int slack[]; //as in the algorithm description
+    public /*static*/ int slackx[]; //slackx[y] such a vertex, that
+    public /*static*/ int previous[]; //array for memorizing alternating p
 
-    public static void init_labels()
+    public /*static*/ void init_labels()
     {
         Arrays.fill(lx, 0);
         Arrays.fill(ly, 0);
@@ -22,7 +22,7 @@ public class Hungarian {
     }
 
 
-    public static void update_labels()
+    public /*static*/ void update_labels()
     {
         int x, y;
         int delta = 99999999; //init delta as infinity
@@ -40,7 +40,7 @@ public class Hungarian {
                 slack[y] -= delta;
     }
 
-    public static void add_to_tree(int x, int prev_iousx)
+    public /*static*/ void add_to_tree(int x, int prev_iousx)
     //x - current vertex,prev_iousx - vertex from X before x in the alternating path,
     //so we add edges (prev_iousx, xy[x]), (xy[x], x)
     {
@@ -56,7 +56,7 @@ public class Hungarian {
 
 
 
-    public static void augment() //main function of the algorithm
+    public /*static*/ void augment() //main function of the algorithm
     {
         if (max_match == n) return; //check whether matching is already perfect
         int x, y; //just counters and root vertex
@@ -153,7 +153,7 @@ public class Hungarian {
         }
     }//end of augment() function
 
-    public static int hungarian()
+    public /*static*/ int hungarian()
     {
         int ret = 0; //weight of the optimal matching
         max_match = 0; //number of vertices in current matching
@@ -169,7 +169,7 @@ public class Hungarian {
 
         return ret;
     }
-    public static int assignmentProblem(int Arr[][]) {
+    public /*static*/ int assignmentProblem(int Arr[][]) {
         int Array[] = new int[Arr.length*Arr.length];
         int k=0;
         for (int i = 0; i < Arr.length; i++) {
@@ -182,7 +182,7 @@ public class Hungarian {
         return assignmentProblem(Array,Arr.length);
     }
 
-    public static int assignmentProblem(int Arr[], int N) {
+    public /*static*/ int assignmentProblem(int Arr[], int N) {
 
         n = N;
         cost = new int[n][n];

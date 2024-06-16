@@ -13,7 +13,7 @@ public class BranchAndBound {
     private LowerBound lowerBound;
     private long nNodes = 0;
     private long startTime = System.currentTimeMillis();
-    private int m = 0;
+    //private int m = 0;
 
     public BranchAndBound(Problem problem) throws InterruptedException {
         this.problem = problem;
@@ -45,6 +45,9 @@ public class BranchAndBound {
     }
 
     public void solve() throws InterruptedException {
+        //this.problem.printArray(problem.opponents);
+        //this.problem.printArray(problem.dist);
+
         startTime = System.currentTimeMillis();
         int[][] path = new int[problem.nUmpires][problem.nRounds];
 
@@ -68,12 +71,20 @@ public class BranchAndBound {
         System.out.println("Time: " + (System.currentTimeMillis() - startTime) / 1_000.0 + "s");
     }
 
+    public void printLowerBounds(){
+        lowerBound.printLowerBounds();
+    }
+
+    public void printLowerBound(){
+        var lb = lowerBound.getLowerBound2(0, problem.nRounds-1);
+        System.out.println("LB: " + lb);
+    }
     private void branchAndBound(int[][] path, int umpire, int round, int currentCost) throws InterruptedException {
         if (round == this.problem.nRounds) {
             // Constructed a full feasible path
             if (currentCost < bestDistance) {
                 // The constructed path is better than the current best path! :)
-                System.out.println("New BEST solution found in " + (System.currentTimeMillis() - startTime) / 60_000.0 + " min with cost " + currentCost + "! :)");
+                //System.out.println("New BEST solution found in " + (System.currentTimeMillis() - startTime) / 60_000.0 + " min with cost " + currentCost + "! :)");
                 //printPath(path);
                 // Copy solution
                 bestDistance = currentCost;
@@ -87,13 +98,8 @@ public class BranchAndBound {
         List<Integer> feasibleAllocations = problem.getValidAllocations(path, umpire, round);
         if (!feasibleAllocations.isEmpty()) {
             for (Integer allocation : feasibleAllocations) {
-//                int[][] subgraph = generateSubgraph(path, round, allocation);
-//                if (subgraph != null) {
-//                   int m = solveMatchingProblem(subgraph);
-//               }
-
-
                 path[umpire][round] = allocation;
+
                 boolean firstVisit = !visited[umpire][allocation - 1];
                 if (firstVisit) {
                     visited[umpire][allocation - 1] = true;
@@ -103,7 +109,7 @@ public class BranchAndBound {
                 int prevHomeTeam = path[umpire][round - 1];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
                 //if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] < problem.nRounds - round && currentCost + extraCost + lowerBound.getLowerBound(round) < bestDistance) {
-                if (!canPrune(path, umpire, round, allocation, currentCost + extraCost)) {
+                if (!canPrune(path, umpire, round, currentCost + extraCost)) {
                     nNodes++;
                     if (umpire == this.problem.nUmpires - 1) {
                         this.branchAndBound(path, 0, round + 1, currentCost + extraCost);
@@ -121,98 +127,33 @@ public class BranchAndBound {
         }
     }
 
-    private int solveMatchingProblem(int[][] subgraph){
-        Hungarian hungarian = new Hungarian();
-        hungarian.assignmentProblem(subgraph);
-        int[] solution = hungarian.xy;
 
-        int cost = 0;
-        for (int i = 0; i < solution.length; i++) {
-            cost += subgraph[i][solution[i]];
-        }
+    private boolean canPrune(int[][] path, int umpire, int round, int currentCost) throws InterruptedException {
 
-        return cost;
-    }
-
-
-    private int[][] generateSubgraph(int[][] assignments, int round, int allocation) {
-        List<Integer> visitedTeams = new ArrayList<>();//aantal teams gevisited in deze ronde
-        List<Integer> previousTeams = new ArrayList<>();//teams visited in de vorige ronde
-        List<Integer> currentRoundTeams = new ArrayList<>();//overige nog te bezoeken teams in deze ronde
-        for (int i = 0; i < problem.nUmpires; i++) {
-            if (assignments[i][round] == 0) {
-            } else {
-                visitedTeams.add(assignments[i][round]);
-            }
-        }
-
-       // System.out.println("Generating subgraph for round " + round +1);
-        if (visitedTeams.isEmpty()) {
-            return null;
-        }
-        for (int i = visitedTeams.size(); i < problem.nUmpires; i++) {
-           previousTeams.add(assignments[i][round-1]);
-
-        }
-        for (int i = 0; i < problem.nTeams; i++) {
-            if (problem.opponents[round][i] < 0) {
-                int homeTeam = -problem.opponents[round][i];
-                int awayTeam = i + 1;
-                if (!visitedTeams.contains(homeTeam) && !visitedTeams.contains(awayTeam) && homeTeam != allocation) {
-                    currentRoundTeams.add(homeTeam);
-                }
-            }
-        }
-
-        int size = Math.max(previousTeams.size(), currentRoundTeams.size());
-        int[][] subgraph = new int[size][size];
-
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (i < previousTeams.size() && j < currentRoundTeams.size()) {
-                    // Vul de kosten in voor de werkelijke teams
-                    subgraph[i][j] = problem.dist[previousTeams.get(i)-1][currentRoundTeams.get(j)-1];
-                } else {
-                    // Vul de kosten in voor de dummy-knopen
-                    subgraph[i][j] = Integer.MAX_VALUE;
-                }
-            }
-        }
-
-        return subgraph;
-    }
-    private boolean canPrune(int[][] path, int umpire, int round, int allocation, int currentCost) throws InterruptedException {
-        // Controleer of het team al is toegewezen in deze ronde
-//        for (int i = 0; i < umpire; i++) {
-//            if (path[i][round] == allocation) {
-//                return true;
-//            }
-//        }
         if (problem.nTeams - numberOfUniqueVenuesVisited[umpire] >= problem.nRounds - round) return true;
 
-        double lb = this.lowerBound.getLowerBound(round);
+        int lb = this.lowerBound.getLowerBound(round);
         if (currentCost + lb >= bestDistance) {
             //System.out.println("Pruned op LB");
             return true;
         }
 
-        int[][] subgraph = generateSubgraph(path, round, allocation);
-        if (subgraph != null && currentCost + lb + lowerBound.getLowerBound(round, round+1) >= bestDistance) {
-            m = solveMatchingProblem(subgraph);
+        // TODO alles was juist behalve 10C. Die is nu ook juist door die laatste voorwaarde erbij te steken
+        if (problem.enablePartialMatching  && umpire < problem.nUmpires - 1 && currentCost + lb + lowerBound.getLowerBound2(round - 1, round) >= bestDistance){
+            // dit werkt correct wanneer we niet memoizeren
+            //var m = this.problem.partialMatching.calculateDistanceGil(path, round, enableCaching);
+            var m = this.problem.partialMatching.calculateDistance(path, round , problem.enableCaching);
+
             //System.out.println("Matching cost: " + m);
-            if (currentCost + lowerBound.getLowerBound(round) + m >= bestDistance) {
+            //m >= problem.maxValue heb ik toegevoegd omdat er deelproblemen/subgraphs zijn die resulteren in niet toegestane routes e.g. [[100  MaxValue],[150  MaxValue]] en zelfs [MaxValue]
+            if (m >= problem.maxValue || currentCost + lb + m >= bestDistance) {
                 //System.out.println("Pruned op matching");
                 return true;
             }
         }
 
-
-
         return false;
     }
-
-
-
 
     private void printPath(int[][] path) {
         System.out.println("-------------------------------------------------------------------------------------");
