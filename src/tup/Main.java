@@ -34,7 +34,8 @@ public class Main {
         problem.enableCaching = true;
         problem.enableLowerBoundPartialMatching = true;
         problem.enableLowerBoundCaching = true;
-        problem.enableMultiThreading = false;
+        problem.enableMultiThreading = true;
+        problem.enableMultiThreadingSub = true;
 
  //       problem.printTournement();
 
