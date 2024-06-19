@@ -7,11 +7,11 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 public class LowerBound {
-    private Problem problem;
+    private final Problem problem;
     private final int nrOfMatches;//aantal matches per ronde
-    private int[][] LB; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
+    private final int[][] LB; // square matrix auto initialized with 0's -> contains the lower bounds for all pairs of rounds
     public boolean shutdown = false;
-    private Semaphore[] mutexes;
+    private final Semaphore[] mutexes;
 
     public LowerBound(Problem problem) {
         this.problem = problem;

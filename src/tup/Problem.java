@@ -148,7 +148,6 @@ public class Problem {
         return previousTeams;
     }
 
-
     public void printArray(int[][] array){
         int rows = array.length; // Get the number of rows
         int cols = array[0].length; // Get the number of columns

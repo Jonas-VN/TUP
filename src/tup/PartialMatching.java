@@ -1,7 +1,6 @@
 package tup;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,11 +9,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class PartialMatching {
 
     public final Problem problem;
-
-    private static final int HASH_SIZE_LIMIT = ( int ) 5e8;
-
-    private AtomicLong counter = new AtomicLong(0);
-    private Map<Long, Integer> partialMatchingResults = new ConcurrentHashMap<>();
+    private final AtomicLong counter = new AtomicLong(0);
+    private final Map<Long, Integer> partialMatchingResults = new ConcurrentHashMap<>();
 
     public PartialMatching(Problem problem) {
         this.problem = problem;
@@ -26,10 +22,10 @@ public class PartialMatching {
         int prevRound = round - 1;
 
         // used and usedPrev keep, respectively, the unconnected games between the current and the next round
-        boolean used[] = new boolean[problem.nUmpires];
-        boolean usedPrev[] = new boolean[problem.nUmpires];
+        boolean[] used = new boolean[this.problem.nUmpires];
+        boolean[] usedPrev = new boolean[this.problem.nUmpires];
 
-        for (int i = 0; i < problem.nUmpires; i++) {
+        for (int i = 0; i < this.problem.nUmpires; i++) {
             int gameNrInRound = 1;
             int gameNrInPrevRound = 1;
             int teamPrevRound = assignments[i][prevRound];
@@ -37,8 +33,8 @@ public class PartialMatching {
 
             // only handle the assigned teams
             if (teamCurrentRound > 0) {
-                gameNrInRound = problem.opponentsGames[round][teamCurrentRound-1];
-                gameNrInPrevRound = problem.opponentsGames[prevRound][teamPrevRound-1];
+                gameNrInRound = this.problem.opponentsGames[round][teamCurrentRound-1];
+                gameNrInPrevRound = this.problem.opponentsGames[prevRound][teamPrevRound-1];
                 usedPrev[gameNrInPrevRound-1] = true;
                 used[gameNrInRound-1] = true;
             }
@@ -51,8 +47,6 @@ public class PartialMatching {
         }
         hashCode = 31 * hashCode + round;
 
-        //System.out.println("roundix " + round + ": " + hashCode);
-
         return hashCode;
     }
 
@@ -64,18 +58,16 @@ public class PartialMatching {
         if (cache) {
             hashCode = getHashCode(assignments, round);
 
-            if (partialMatchingResults.containsKey(hashCode)) {
-                //System.out.println("Partial match memoization hit on key: " + key + " : " + partialMatchingResults.get(key));
-                return partialMatchingResults.get(hashCode);
-            } else if (counter.get() >= HASH_SIZE_LIMIT) {
-                return 0;
+            if (this.partialMatchingResults.containsKey(hashCode)) {
+//                System.out.println("Partial match memoization hit on key: " + hashCode + " : " + partialMatchingResults.get(hashCode));
+                return this.partialMatchingResults.get(hashCode);
             }
         }
 
         List<Integer> currentRoundVisitedTeams = new ArrayList<>();// teams gevisited in deze ronde
         List<Integer> previousRoundHomeTeams = new ArrayList<>(); //teams visited in previous round for which no umpire has been assigned yet in this round
 
-        for (int i = 0; i < problem.nUmpires; i++) {
+        for (int i = 0; i < this.problem.nUmpires; i++) {
             if (assignments[i][round] == 0) {
                 previousRoundHomeTeams.add(assignments[i][round-1]);
             }
@@ -88,9 +80,9 @@ public class PartialMatching {
         List<Integer> currentRoundHomeTeams = new ArrayList<>(); //teams to visite in this round
         List<Integer> currentRoundAwayTeams = new ArrayList<>(); //teams to visite in this round
 
-        for (int i = 0; i < problem.nTeams; i++) {
-            if (problem.opponents[round][i] < 0) {
-                int homeTeam = -problem.opponents[round][i];
+        for (int i = 0; i < this.problem.nTeams; i++) {
+            if (this.problem.opponents[round][i] < 0) {
+                int homeTeam = -this.problem.opponents[round][i];
                 int awayTeam = i + 1;
                 if (!currentRoundVisitedTeams.contains(homeTeam)) {
                     currentRoundHomeTeams.add(homeTeam);
@@ -104,23 +96,23 @@ public class PartialMatching {
 
         for (int i = 0; i < size; i++) {
             int prevRoundHomeTeam = previousRoundHomeTeams.get(i);
-            int prevRoundAwayTeam = problem.opponents[round-1][prevRoundHomeTeam-1];
+            int prevRoundAwayTeam = this.problem.opponents[round-1][prevRoundHomeTeam-1];
 
             for (int j = 0; j < size; j++) {
                 // Vul de kosten in voor de werkelijke teams
                 int currentRoundHomeTeam = currentRoundHomeTeams.get(j);
                 int currentRoundAwayTeam = currentRoundAwayTeams.get(j);
 
-                if (problem.q2 > 1 && (prevRoundHomeTeam == currentRoundHomeTeam ||
+                if (this.problem.q2 > 1 && (prevRoundHomeTeam == currentRoundHomeTeam ||
                         prevRoundAwayTeam == currentRoundHomeTeam ||
                         prevRoundHomeTeam == currentRoundAwayTeam ||
                         prevRoundAwayTeam == currentRoundAwayTeam)
                 ) {
-                    subgraph[i][j] = problem.maxValue; //Integer.MAX_VALUE;
-                } else if (problem.q1 > 1 && prevRoundHomeTeam == currentRoundHomeTeam) {
-                    subgraph[i][j] = problem.maxValue; //Integer.MAX_VALUE;
+                    subgraph[i][j] = this.problem.maxValue; //Integer.MAX_VALUE;
+                } else if (this.problem.q1 > 1 && prevRoundHomeTeam == currentRoundHomeTeam) {
+                    subgraph[i][j] = this.problem.maxValue; //Integer.MAX_VALUE;
                 } else {
-                    subgraph[i][j] = problem.dist[previousRoundHomeTeams.get(i) - 1][currentRoundHomeTeams.get(j) - 1];
+                    subgraph[i][j] = this.problem.dist[previousRoundHomeTeams.get(i) - 1][currentRoundHomeTeams.get(j) - 1];
                 }
             }
         }
@@ -142,8 +134,8 @@ public class PartialMatching {
         }
 
         if (cache) {
-            counter.incrementAndGet();
-            partialMatchingResults.put(hashCode, m);
+            this.counter.incrementAndGet();
+            this.partialMatchingResults.put(hashCode, m);
         }
 
         return m;

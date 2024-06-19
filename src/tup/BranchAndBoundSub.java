@@ -11,6 +11,7 @@ public class BranchAndBoundSub {
     private final int lastRound;
     private final int firstRound;
     private final Problem problem;
+    private final int firstRoundIdx;
     private final LowerBound lowerbound;
     private final AtomicInteger bestDistance = new AtomicInteger(Integer.MAX_VALUE);
 
@@ -24,23 +25,25 @@ public class BranchAndBoundSub {
     public BranchAndBoundSub(Problem problem, int firstRound, int lastRound, LowerBound lowerbound) {
         this.problem = problem;
         this.firstRound = firstRound;
+        this.firstRoundIdx = firstRound - 1;
         this.lastRound = lastRound;
         this.lowerbound = lowerbound;
     }
 
     public int solve() throws InterruptedException {
-        int[][] path = new int[problem.nUmpires][lastRound-firstRound+1];
+        int[][] path = new int[this.problem.nUmpires][this.lastRound - this.firstRoundIdx];
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
         int umpire = 0;
-        for (int team = 0; team < problem.nTeams; team++) {
-            if (problem.opponents[this.firstRound-1][team] < 0) {
-                path[umpire++][0] = -problem.opponents[this.firstRound-1][team];
+        for (int team = 0; team < this.problem.nTeams; team++) {
+            if (this.problem.opponents[this.firstRoundIdx][team] < 0) {
+                path[umpire++][0] = -this.problem.opponents[this.firstRoundIdx][team];
             }
         }
 
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
-        if (problem.enableMultiThreadingSub) this.multiThreadedBranchAndBound(path, 0, firstRound,0);
-        else this.branchAndBound(path, 0, firstRound,0);
+        if (this.problem.enableMultiThreadingSub)
+            this.multiThreadedBranchAndBound(path, 0, this.firstRound,0);
+        else this.branchAndBound(path, 0, this.firstRound,0);
 
         return bestDistance.get();
     }
@@ -52,9 +55,9 @@ public class BranchAndBoundSub {
             executor.submit(() -> {
                 // Each thread has its own copy of the path arrays
                 int[][] newPath = Arrays.stream(path).map(int[]::clone).toArray(int[][]::new);
-                newPath[umpire][round - firstRound + 1] = allocation;
+                newPath[umpire][round - this.firstRoundIdx] = allocation;
 
-                int prevHomeTeam = path[umpire][round - firstRound];
+                int prevHomeTeam = path[umpire][round - this.firstRound];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
 
                 if (!this.canPrune(newPath, round, umpire,currentCost + extraCost)) {
@@ -84,18 +87,18 @@ public class BranchAndBoundSub {
         if (this.lowerbound.shutdown) return;
 
         // Constructed a full feasible path
-        if (round == lastRound) {
+        if (round == this.lastRound) {
             // The constructed path is better than the current best path! :)
-            if (currentCost < bestDistance.get()) bestDistance.set(currentCost);
+            if (currentCost < this.bestDistance.get()) this.bestDistance.set(currentCost);
             return;
         }
 
         List<Integer> feasibleAllocations = this.getValidAllocations(path, umpire, round);
         if (!feasibleAllocations.isEmpty()) {
             for (Integer allocation : feasibleAllocations) {
-                path[umpire][round - firstRound + 1] = allocation;
+                path[umpire][round - this.firstRoundIdx] = allocation;
 
-                int prevHomeTeam = path[umpire][round - firstRound];
+                int prevHomeTeam = path[umpire][round - this.firstRound];
                 int extraCost = this.problem.dist[prevHomeTeam - 1][allocation - 1];
                 if (!canPrune(path, round, umpire,currentCost + extraCost)) {
                     if (umpire == this.problem.nUmpires - 1) {
@@ -105,7 +108,7 @@ public class BranchAndBoundSub {
                 }
 
                 // Backtrack
-                path[umpire][round-firstRound+1] = 0;
+                path[umpire][round - this.firstRoundIdx] = 0;
             }
         }
     }
@@ -130,14 +133,14 @@ public class BranchAndBoundSub {
             // Create the new 2D array because Partial matching needs all the rounds
             int[][] fullPath = new int[this.problem.nUmpires][this.problem.nRounds];
             // Copy elements from the original array to the new array starting at a certain index
-            int startIdx = firstRound - 1;
             for (int i = 0; i < path.length; i++) {
                 // Copy each sub-array to the new sub-array
-                System.arraycopy(path[i], 0, fullPath[i], startIdx, path[i].length);
+                System.arraycopy(path[i], 0, fullPath[i], this.firstRoundIdx, path[i].length);
             }
 
-            var m = this.problem.partialMatching.calculateDistance(fullPath, round, problem.enableLowerBoundCaching);
-            return m >= problem.maxValue || currentCost + lb + m >= bestDistance.get();
+            var m = this.problem.partialMatching.calculateDistance(fullPath, round, this.problem.enableLowerBoundCaching);
+            if (m >= this.problem.maxValue || currentCost + lb + m >= this.bestDistance.get())
+                return true;
         }
 
         return false;
@@ -160,8 +163,8 @@ public class BranchAndBoundSub {
 
         List<Integer> alreadyUsedThisRound = new ArrayList<>();
         for (int i = 0; i < this.problem.nUmpires; i++){
-            if (assignments[i][round - this.firstRound + 1] != 0){
-                alreadyUsedThisRound.add(assignments[i][round - this.firstRound + 1]);
+            if (assignments[i][round - this.firstRoundIdx] != 0){
+                alreadyUsedThisRound.add(assignments[i][round - this.firstRoundIdx]);
             }
         }
         feasibleAllocations.removeIf(alreadyUsedThisRound::contains);
@@ -169,8 +172,8 @@ public class BranchAndBoundSub {
         // Sort on distance to previous location
         feasibleAllocations.sort((a, b) -> {
             int prevLocation = assignments[umpire][round - this.firstRound];
-            int aDistance = problem.dist[prevLocation - 1][a - 1];
-            int bDistance = problem.dist[prevLocation - 1][b - 1];
+            int aDistance = this.problem.dist[prevLocation - 1][a - 1];
+            int bDistance = this.problem.dist[prevLocation - 1][b - 1];
             return Integer.compare(aDistance, bDistance);
         });
 
@@ -179,8 +182,8 @@ public class BranchAndBoundSub {
 
     public List<Integer> getPreviousLocations(int [][] assignments, int round, int umpire) {
         List<Integer> previousLocations = new ArrayList<>();
-        for (int i = 1; i < problem.q1 && round - i - firstRound + 1 >= 0; i++) {
-            int homeTeam = assignments[umpire][round - i - firstRound + 1];
+        for (int i = 1; i < this.problem.q1 && round - i - this.firstRoundIdx >= 0; i++) {
+            int homeTeam = assignments[umpire][round - i - this.firstRoundIdx];
             previousLocations.add(homeTeam);
         }
         return previousLocations;
@@ -188,9 +191,9 @@ public class BranchAndBoundSub {
 
     private List<Integer> getPreviousTeams(int [][] assignments, int round, int umpire) {
         List<Integer> previousTeams = new ArrayList<>();
-        for (int i = 1; i < problem.q2 && round - i - firstRound + 1 >= 0; i++) {
-            int homeTeam = assignments[umpire][round - i - firstRound + 1];
-            int awayTeam = problem.opponents[round - i][homeTeam - 1];
+        for (int i = 1; i < this.problem.q2 && round - i - this.firstRoundIdx >= 0; i++) {
+            int homeTeam = assignments[umpire][round - i - this.firstRoundIdx];
+            int awayTeam = this.problem.opponents[round - i][homeTeam - 1];
             previousTeams.add(homeTeam);
             previousTeams.add(awayTeam);
         }

@@ -29,47 +29,48 @@ public class BranchAndBound {
                 this.lowerBound.solve();
             } catch (InterruptedException ignored) {}
             System.out.println("Lower bound calculation time: " + (System.currentTimeMillis() - StartTime) / 1000.0 + "s");
-            this.lowerBound.printLowerBounds();
         });
         executor.shutdown();
     }
 
     public void solve() throws InterruptedException {
-        int[][] path = new int[problem.nUmpires][problem.nRounds];
-        int[] numberOfUniqueVenuesVisited = new int[problem.nUmpires];
-        boolean[][] visited = new boolean[problem.nUmpires][problem.nTeams];
+        int[][] path = new int[this.problem.nUmpires][this.problem.nRounds];
+        int[] numberOfUniqueVenuesVisited = new int[this.problem.nUmpires];
+        boolean[][] visited = new boolean[this.problem.nUmpires][this.problem.nTeams];
 
         // init arrays
-        for (int i = 0; i < problem.nUmpires; i++) {
+        for (int i = 0; i < this.problem.nUmpires; i++) {
             numberOfUniqueVenuesVisited[i] = 0;
-            for (int j = 0; j < problem.nTeams; j++) {
+            for (int j = 0; j < this.problem.nTeams; j++) {
                 visited[i][j] = false;
             }
         }
 
         // Wijs in de eerste ronde elke scheidsrechter willekeurig toe aan een wedstrijd
         int umpire = 0;
-        for (int team = 0; team < problem.nTeams; team++) {
-            if (problem.opponents[0][team] < 0) {
-                path[umpire][0] = -problem.opponents[0][team];
+        for (int team = 0; team < this.problem.nTeams; team++) {
+            if (this.problem.opponents[0][team] < 0) {
+                path[umpire][0] = -this.problem.opponents[0][team];
                 numberOfUniqueVenuesVisited[umpire]++;
-                visited[umpire][-problem.opponents[0][team] - 1] = true;
+                visited[umpire][-this.problem.opponents[0][team] - 1] = true;
                 umpire++;
             }
         }
 
         // Voer het branch-and-bound algoritme uit vanaf de tweede ronde
-        if (problem.enableMultiThreading) this.multiThreadedBranchAndBound(path, 0, 1, 0, visited, numberOfUniqueVenuesVisited);
+        if (this.problem.enableMultiThreading)
+            this.multiThreadedBranchAndBound(path, 0, 1, 0, visited, numberOfUniqueVenuesVisited);
         else this.branchAndBound(path, 0, 1, 0, visited, numberOfUniqueVenuesVisited);
 
         // Dirty fix to shut down the lower bound thread when it is in a big B&B SUB tree
         this.lowerBound.shutdown = true;
 
         System.out.println("Best solution: ");
-        printPath(bestSolution);
-        System.out.println("Distance: " + bestDistance);
-        System.out.println("Number of nodes: " + nNodes);
-        System.out.println("Time: " + (System.currentTimeMillis() - startTime) / 1_000.0 + "s");
+        printPath(this.bestSolution);
+        System.out.println("Distance: " + this.bestDistance);
+        System.out.println("Number of nodes: " + this.nNodes);
+        System.out.println("Time: " + (System.currentTimeMillis() - this.startTime) / 1_000.0 + "s");
+        this.lowerBound.printLowerBounds();
     }
 
     public void printLowerBounds(){
@@ -77,12 +78,12 @@ public class BranchAndBound {
     }
 
     public void printLowerBound(){
-        var lb = lowerBound.getLowerBound2(0, problem.nRounds-1);
+        var lb = lowerBound.getLowerBound2(0, this.problem.nRounds - 1);
         System.out.println("LB: " + lb);
     }
 
     private void multiThreadedBranchAndBound(int[][] path, int umpire, int round, int currentCost, boolean[][] visited, int[] numberOfUniqueVenuesVisited) throws InterruptedException {
-        List<Integer> feasibleAllocations = problem.getValidAllocations(path, umpire, round);
+        List<Integer> feasibleAllocations = this.problem.getValidAllocations(path, umpire, round);
         ExecutorService executor = Executors.newFixedThreadPool(feasibleAllocations.size());
         int threadNr = 0;
         for (Integer allocation : feasibleAllocations) {
@@ -129,7 +130,7 @@ public class BranchAndBound {
             // Constructed a full feasible path
             if (currentCost < this.bestDistance.get()) {
                 // The constructed path is better than the current best path! :)
-                //System.out.println("New BEST solution found in " + (System.currentTimeMillis() - startTime) / 60_000.0 + " min with cost " + currentCost + "! :)");
+                System.out.println("New BEST solution found in " + (System.currentTimeMillis() - startTime) / 60_000.0 + " min with cost " + currentCost + "! :)");
                 // Copy solution
                 this.bestDistance.set(currentCost);
                 this.bestSolutionMutex.acquire();
@@ -139,7 +140,7 @@ public class BranchAndBound {
             return;
         }
 
-        List<Integer> feasibleAllocations = problem.getValidAllocations(path, umpire, round);
+        List<Integer> feasibleAllocations = this.problem.getValidAllocations(path, umpire, round);
         for (Integer allocation : feasibleAllocations) {
             path[umpire][round] = allocation;
 
@@ -179,19 +180,15 @@ public class BranchAndBound {
             return true;
 
         // Prune based on partial matching
-        if (this.canPruneOnPartialMatching(umpire, currentCost, lb, round)) {
+        if (this.problem.enablePartialMatching && umpire < this.problem.nUmpires - 1) {
             var m = this.problem.partialMatching.calculateDistance(path, round , problem.enableCaching);
 
             //m >= problem.maxValue heb ik toegevoegd omdat er deelproblemen/subgraphs zijn die resulteren in niet toegestane routes e.g. [[100  MaxValue],[150  MaxValue]] en zelfs [MaxValue]
-            return m >= problem.maxValue || currentCost + lb + m >= bestDistance.get();
+            if (m >= problem.maxValue || currentCost + lb + m >= bestDistance.get())
+                return true;
         }
 
         return false;
-    }
-
-    private boolean canPruneOnPartialMatching(int umpire, int currentCost, int lb, int round) {
-        return this.problem.enablePartialMatching &&
-                umpire < this.problem.nUmpires - 1;
     }
 
     private void printPath(int[][] path) {
