@@ -34,8 +34,10 @@ public class Main {
         problem.enableCaching = true;
         problem.enableLowerBoundPartialMatching = true;
         problem.enableLowerBoundCaching = true;
+        problem.enableMultiThreading = true;
+        problem.enableMultiThreadingSub = true;
 
- //       problem.printTournement();
+        //       problem.printTournement();
 
 //        LowerBound lb = new LowerBound(problem);
 //        lb.solve();

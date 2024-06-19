@@ -28,6 +28,9 @@ public class Problem {
     public Boolean enableLowerBoundPartialMatching = false;
     public Boolean enableLowerBoundCaching = false;
 
+    public Boolean enableMultiThreading = false;
+    public Boolean enableMultiThreadingSub = false;
+
     public Problem(int nTeams, int[][] dist, int[][] opponents, int q1, int q2) {
         this.nTeams = nTeams;
         this.nUmpires = nTeams / 2;
@@ -182,4 +185,3 @@ public class Problem {
         System.out.println();
     }
 }
-

@@ -141,38 +141,6 @@ public class LowerBound {
             }
         }
 
-        // originele implementatie maar gefoefel met index en/of rondenrs
-//        for (int k = 3; k <= problem.nRounds - 1; k++) {
-//            int r = problem.nRounds - k;
-//            int end = r+k;
-//
-//            while (r >= 1) {
-//                for (int r3 = r + k - 2; r3 >= r; r3--) {
-//                    if (shutdown) return;
-//                    System.out.println(String.format("Bnb Sub from roundnr %d to roundnr %d", r3, r+k));
-//                    if (S[r3 - 1][r + k - 1] > 0) {
-//                        continue; // do not resolve already solved subproblems
-//                    }
-//                    if (S[r3 - 1][r + k - 1] == 0) {
-//                        BranchAndBoundSub bbsub = new BranchAndBoundSub(problem, r3, r + k, this);
-//                        S[r3 - 1][r + k - 1] = bbsub.solve();
-//                    }
-//
-//                    for (int r1 = r3; r1 >= 1; r1--) {
-//                        for (int r2 = r + k; r2 < problem.nRounds+1; r2++) {
-//                            mutexes[r1 - 1].acquire();
-//                            mutexes[r + k - 1].acquire();
-//                            LB[r1 - 1][r2 - 1] = Math.max(LB[r1 - 1][r2 - 1], LB[r1 - 1][r3 - 1] + S[r3 - 1][r + k - 1] + LB[r + k - 1][r2 - 1]);
-//                            mutexes[r1 - 1].release();
-//                            mutexes[r + k - 1].release();
-//                        }
-//                    }
-//                }
-//
-//                r = r - k;
-//            }
-//        }
-
 
         for (int k = 2; k < problem.nRounds; k++) {
             //System.out.println(String.format("k = %d", k));
